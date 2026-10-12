@@ -1,0 +1,144 @@
+# ---------------------------------------------------------------
+# Safe defaults for a quantitative-research repository.
+# Principle: nothing sensitive, licensed, large or regenerable is tracked.
+# Rules marked [DECISION] may be refined after DEC-009/010/015.
+# ---------------------------------------------------------------
+
+# --- Secrets & credentials (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.jks
+secrets/
+secrets.*
+credentials*
+*.token
+.netrc
+id_rsa*
+id_ed25519*
+service-account*.json
+*.secret
+.aws/
+.azure/
+.gcloud/
+
+# --- Market data & derived datasets (licensing! see docs/data/DATA_GOVERNANCE.md) ---
+# Ignore all contents of data/, keep directory placeholders and README.
+data/**
+!data/
+!data/README.md
+!data/*/
+!data/*/.gitkeep
+# Small, explicitly synthetic fixtures may be tracked if named *.synthetic.*
+!data/samples/*.synthetic.*
+# Raw provider exports anywhere in the tree
+*.parquet
+*.feather
+*.arrow
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.csv.gz
+*.zip
+*.tar
+*.tar.gz
+*.7z
+# Synthetic fixtures under tests/ are the exception (explicitly labelled *.synthetic.*)
+!backend/tests/fixtures/**/*.synthetic.*
+!tests/fixtures/**/*.synthetic.*
+
+# --- Experiment outputs, model artifacts (reproducible from config + data versions) ---
+artifacts/**
+!artifacts/
+!artifacts/README.md
+!artifacts/.gitkeep
+experiments/**
+!experiments/
+!experiments/README.md
+!experiments/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.joblib
+mlruns/
+runs/
+wandb/
+lightning_logs/
+tensorboard/
+logs/
+*.log
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version.local
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+notebooks/**/*.ipynb_checkpoints/
+# Notebook outputs may embed licensed data; strip outputs before committing.
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.cache/
+frontend/coverage/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.parcel-cache/
+.vite/
+*.tsbuildinfo
+
+# --- Tooling, editors, OS ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+.claude/settings.local.json
+.claude/scratch/
+
+# --- Temporary / scratch ---
+tmp/
+temp/
+scratch/
+*.tmp
+*.bak

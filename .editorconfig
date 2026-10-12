@@ -1,0 +1,28 @@
+# EditorConfig — https://editorconfig.org
+# Tool-agnostic basics only. Language-specific formatters/linters are chosen with DEC-015 / DEC-008.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{md,markdown}]
+# Trailing double-space is a hard line break in some Markdown renderers; avoid relying on it.
+trim_trailing_whitespace = false
+indent_size = 2
+
+[*.{yml,yaml,json,jsonc,toml}]
+indent_size = 2
+
+[*.{js,jsx,ts,tsx,css,scss,html}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
