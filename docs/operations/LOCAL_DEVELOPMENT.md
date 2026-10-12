@@ -2,10 +2,19 @@
 
 **Status:** PLANNED — **no setup is possible yet.** No toolchain, dependency manifest, lockfile, scripts or code exist. This document is a placeholder with the structure that will be filled when the first implementation phase selects tools (DEC-015). **Do not invent or paste setup commands that do not exist.** · **Related:** [CONFIGURATION](CONFIGURATION.md), [CODING_STANDARDS](../engineering/CODING_STANDARDS.md), [TESTING_STRATEGY](../engineering/TESTING_STRATEGY.md)
 
+## Phase 0 synthetic spike (the only runnable code today)
+Verified on 2026-10-12 on Windows 11, CPython 3.12.6 (only configuration tested); needs nothing installed (standard library only, [ADR-0003](../architecture/ADR/ADR-0003-phase0-spike-toolchain.md)). From `scripts/phase0_synthetic/`:
+```text
+python -m unittest discover -s tests -t .
+python -m phase0.run single --world AR --seed 20261013 --days 300
+python -m phase0.run study --first-seed 20261100 --n-seeds 10 --days 300
+```
+All data are **synthetic**; run records go to the git-ignored `experiments/phase0_synthetic/`. This is not the product environment — that is still undecided (DEC-015).
+
 ## What is true today
 - The repository contains documentation, directory placeholders and templates only.
 - A Git repository exists in this folder with **no commits** (not created by the foundation run, which made no Git changes). Committing is the owner's decision.
-- There is nothing to build, run, or test.
+- There is no product code to build, run, or test; only the synthetic spike above is runnable.
 
 ## To be completed when Phase 1 starts
 | Section | Content to add | Blocked by |

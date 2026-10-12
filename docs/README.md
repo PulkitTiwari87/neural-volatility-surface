@@ -27,7 +27,10 @@
 | Evaluation, splits, metrics | [research/EVALUATION_PROTOCOL](research/EVALUATION_PROTOCOL.md) | — |
 | Uncertainty | [research/UNCERTAINTY_AND_CALIBRATION](research/UNCERTAINTY_AND_CALIBRATION.md) | — |
 | Limitations | [research/KNOWN_LIMITATIONS](research/KNOWN_LIMITATIONS.md) | — |
-| Data source selection | [data/DATA_SOURCE_ASSESSMENT](data/DATA_SOURCE_ASSESSMENT.md) | DEC-001/002/003 |
+| Data source selection (evidence, licence findings, blockers) | [data/DATA_SOURCE_ASSESSMENT](data/DATA_SOURCE_ASSESSMENT.md) | DEC-001/002/003 |
+| Minimum viable dataset, Phase 0 success criteria, synthetic sample, feasibility experiment | [research/PHASE0_FEASIBILITY_PLAN](research/PHASE0_FEASIBILITY_PLAN.md) | EVALUATION_PROTOCOL §8 |
+| Phase 0 synthetic experiment results (tests, scenarios, study, deviations) | [research/PHASE0_SYNTHETIC_RESULTS](research/PHASE0_SYNTHETIC_RESULTS.md) | `scripts/phase0_synthetic/`, ADR-0003 |
+| Draft questions to Cboe (not sent) | [data/CBOE_LICENSING_QUESTIONS](data/CBOE_LICENSING_QUESTIONS.md) | DATA_SOURCE_ASSESSMENT §10.3 |
 | Schemas | [data/DATA_DICTIONARY](data/DATA_DICTIONARY.md) | — |
 | Licensing & governance | [data/DATA_GOVERNANCE](data/DATA_GOVERNANCE.md) | — |
 | Quote filters | [data/QUOTE_QUALITY_POLICY](data/QUOTE_QUALITY_POLICY.md) | — |

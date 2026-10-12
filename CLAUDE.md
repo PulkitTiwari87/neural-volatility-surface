@@ -1,7 +1,7 @@
 # CLAUDE.md — Persistent instructions for Claude Code sessions
 
 **Project:** Neural Volatility Surface Forecasting Lab (research-grade; **not** a trading product).
-**Current state:** documentation scaffold only. **No application code exists.** Every component is `PLANNED` unless a status table says otherwise ([README.md](README.md#project-status)).
+**Current state:** documentation scaffold plus **one disposable, synthetic-only Phase 0 spike** (`scripts/phase0_synthetic/`, standard library, not product code — [ADR-0003](docs/architecture/ADR/ADR-0003-phase0-spike-toolchain.md)). **No application code exists in `backend/` or `frontend/`.** Status in one line: synthetic feasibility spike = implemented and reproduced locally (synthetic data only); **real-data feasibility = pending** (provider terms, pricing and a permitted sample not obtained); **neural forecasting on real options data = not implemented, not validated**; provider/market/audience/product-toolchain decisions = **open**; **Phase 0 = incomplete**. Never imply otherwise. Every component is `PLANNED` unless a status table says otherwise ([README.md](README.md#project-status)). Git operations (commit, push, branch, config) are the owner's alone — never perform them.
 **Scope note:** a `CLAUDE.md` in a parent directory (`D:\Claude Code\`) belongs to an unrelated project ("Atlas": distributed compute, its own phase list). Its phases, DB rules and conventions **do not apply here**. Where the two conflict, this file wins for this repository. Generic habits that do carry over: smallest diff, inspect before editing, root-cause fixes, don't weaken tests.
 
 ---

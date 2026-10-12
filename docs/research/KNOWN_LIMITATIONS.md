@@ -20,6 +20,7 @@
 | L-14 | Single market/underlying in v1; conclusions do not transfer automatically. | MP §2 | Limited generality | Scope statements in reports | Planned |
 | L-15 | 3D rendering can mislead (perspective, scaling). | MP §25 | Misreading | 2D alternatives; visible axes/units | Planned |
 | L-16 | Data freshness: provider data may be delayed; no real-time capability assumed. | MP §6 | Mislabeling risk | Data-mode label (GR-DATA-07) | Planned |
-| L-17 | Documentation currently precedes implementation: no component is implemented or validated. | Foundation | Over-reading docs | Status labels; honest status tables | Active |
+| L-17 | Documentation currently precedes implementation: no product component is implemented or validated (only a disposable synthetic spike exists). | Foundation | Over-reading docs | Status labels; honest status tables | Active |
+| L-18 | All feasibility results so far are **synthetic**: they verify pipeline logic and detection ability, not real-market behaviour, quote noise, or provider data quality; the detection procedure was run on only 9–10 seeds per world. | Phase 0 spike ([results](PHASE0_SYNTHETIC_RESULTS.md) §9) | Over-reading synthetic success | Every result labelled SYNTHETIC; real-sample evidence required for the Phase 0 gate | Active |
 
 **Rule:** a limitation is removed only with evidence that it no longer applies; otherwise it remains and may be refined. New limitations discovered in experiments are added with the experiment ID.

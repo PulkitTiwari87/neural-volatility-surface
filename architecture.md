@@ -1,6 +1,6 @@
 # architecture.md — Proposed System Architecture
 
-**Status:** PROPOSED. This is the **conceptual** architecture derived from MP §5 and §18–§22. **Nothing described here is implemented.** Where a technology is named it is an example or a `PROPOSED` option, never a decision (see [decision.md](decision.md)).
+**Status:** PROPOSED. This is the **conceptual** architecture derived from MP §5 and §18–§22. **Nothing described here is implemented** (the disposable Phase 0 synthetic spike in `scripts/phase0_synthetic/` does not implement this architecture and imports none of it). Where a technology is named it is an example or a `PROPOSED` option, never a decision (see [decision.md](decision.md)).
 **Canonical for:** architectural principles, component responsibilities, domain boundaries, dependency rules, error/background/security/observability posture.
 **Details live in:** [SYSTEM_OVERVIEW](docs/architecture/SYSTEM_OVERVIEW.md) (context & module map) · [DATA_FLOW](docs/architecture/DATA_FLOW.md) (stage contracts) · [STORAGE_DESIGN](docs/architecture/STORAGE_DESIGN.md) · [API_CONTRACTS](docs/architecture/API_CONTRACTS.md) · [ADR/](docs/architecture/ADR/)
 **Related requirements:** NFR-001…012, SEC-001…007, FR-001…018 in [PR.md](PR.md).

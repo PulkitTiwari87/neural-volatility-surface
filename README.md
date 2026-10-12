@@ -2,7 +2,7 @@
 
 > **Research and education software. Not investment advice, not a trading system.** Forecasts are uncertain, market data may be delayed or incomplete, and every result must be judged against simple baselines.
 
-**Repository status:** documentation scaffold (foundation). **No application code, data, models or results exist yet.**
+**Repository status:** documentation scaffold plus one **disposable, synthetic-only Phase 0 feasibility spike** (`scripts/phase0_synthetic/`, implemented and reproduced locally). **No product code, no real market data, no neural models and no real-market results exist.** Phase 0 is **incomplete**.
 
 ## Research objective
 
@@ -36,9 +36,14 @@ Details: [architecture.md](architecture.md).
 |---|---|
 | Master plan (baseline spec) | Present and unmodified (verified by file hash at scaffold time); not a software component |
 | Requirements, architecture, guardrails, design, decisions, roadmap docs | Drafted — `PROPOSED`, pending owner review. These describe intended behaviour; they are not evidence that anything works |
-| Phase 0 — Research & feasibility | PLANNED (next) |
+| Phase 0 — Research & feasibility | IN_PROGRESS — desk research done; **synthetic** feasibility spike run (`scripts/phase0_synthetic/`, 57 tests pass, results with disclosed failures in `docs/research/PHASE0_SYNTHETIC_RESULTS.md`); no real sample, no purchase, no decision finalized; email to Cboe drafted, **not sent**; exit gate not met |
+| Spike code (`scripts/phase0_synthetic/`) | IMPLEMENTED as a disposable, synthetic-only spike (standard library; not product code); everything else under `backend/` remains PLANNED |
 | Phases 1–7 (data, IV/surfaces, baselines, neural, UI, release, advanced) | PLANNED |
-| Any runtime code, tests, CI, data, models | PLANNED (none exist) |
+| Synthetic feasibility spike | IMPLEMENTED locally and independently reproduced (audit: [PHASE0_AUDIT](docs/research/PHASE0_AUDIT.md)); proves pipeline *logic* on synthetic data only |
+| Real-data feasibility | **PENDING** — blocked on written provider terms (Cboe questions drafted, **not sent**), pricing, and a permitted real sample; nothing measured on real data |
+| Neural forecasting on real options data | **NOT IMPLEMENTED, NOT VALIDATED** — no neural model has been trained on any data; no claim about model superiority is made |
+| Provider, market, audience, product toolchain | **OPEN** — only proposals exist (decision.md: 0 of 15 decided) |
+| Product code (`backend/`, `frontend/`), CI, real data | PLANNED (none exist) |
 | Technical decisions ([decision.md](decision.md)) | 0 of 15 decided |
 
 Status vocabulary: `PLANNED`, `PROPOSED`, `IN_PROGRESS`, `IMPLEMENTED`, `VALIDATED`, `BLOCKED`, `DEFERRED`. A document existing never implies the thing it describes exists.
@@ -58,7 +63,7 @@ Status vocabulary: `PLANNED`, `PROPOSED`, `IN_PROGRESS`, `IMPLEMENTED`, `VALIDAT
 
 ## Setup status
 
-There is nothing to install or run yet: no dependency manifest, lockfile, or scripts exist, because the toolchain is not selected ([DEC-015](decision.md)). Setup instructions will be added to [docs/operations/LOCAL_DEVELOPMENT.md](docs/operations/LOCAL_DEVELOPMENT.md) when the first implementation phase selects tools. Do not invent commands.
+There is nothing to install: no dependency manifest or lockfile exists, because the product toolchain is not selected ([DEC-015](decision.md)). The only runnable code is the standard-library **synthetic** Phase 0 spike (`scripts/phase0_synthetic/`; run its tests with `python -m unittest discover -s tests -t .` from that folder — see its README). Setup instructions will be added to [docs/operations/LOCAL_DEVELOPMENT.md](docs/operations/LOCAL_DEVELOPMENT.md) when the first implementation phase selects tools. Do not invent commands.
 
 ## Repository structure
 
@@ -77,7 +82,7 @@ There is nothing to install or run yet: no dependency manifest, lockfile, or scr
 ├── data/                     raw · interim · processed · external · samples   (contents git-ignored)
 ├── experiments/  artifacts/  run records and generated outputs (git-ignored)
 ├── notebooks/exploratory/    scratch analysis (not a source of truth)
-├── scripts/                  operational helpers (none yet)
+├── scripts/                  helpers; `phase0_synthetic/` = disposable SYNTHETIC feasibility spike (stdlib only)
 ├── backend/                  src/volatility_lab/{config,domain,ingestion,validation,pricing,surfaces,features,datasets,models,evaluation,experiments,storage,api,observability} · tests/{unit,integration,scientific,fixtures}
 ├── frontend/                 (empty until DEC-008 and Phase 5)
 ├── tests/                    end_to_end · regression · fixtures

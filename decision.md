@@ -18,9 +18,9 @@
 
 | ID | Decision | Status | Blocks | Owner role |
 |---|---|---|---|---|
-| DEC-001 | Initial options market & underlying universe | NEEDS RESEARCH | Phase 0 exit, all later | Project owner / quant lead |
-| DEC-002 | Historical data provider & licensing | NEEDS RESEARCH | Phase 1 start | Project owner / data engineer |
-| DEC-003 | Historical coverage & snapshot frequency | NEEDS RESEARCH | Phase 0 exit | Quant lead / data engineer |
+| DEC-001 | Initial options market & underlying universe | PROPOSED (SPX/SPXW; evidence incomplete) | Phase 0 exit, all later | Project owner / quant lead |
+| DEC-002 | Historical data provider & licensing | PROPOSED lead (Cboe DataShop; licensing blockers open) | Phase 1 start | Project owner / data engineer |
+| DEC-003 | Historical coverage & snapshot frequency | PROPOSED (daily 15:45 ET snapshot; MVD thresholds unfrozen) | Phase 0 exit | Quant lead / data engineer |
 | DEC-004 | Initial pricing model & instrument assumptions | PROPOSED (conditional on DEC-001) | Phase 2 | Quant lead |
 | DEC-005 | Moneyness convention & maturity definition | PROPOSED | Phase 2 | Quant lead |
 | DEC-006 | Surface grid & interpolation method | NEEDS RESEARCH | Phase 2 exit | Quant lead |
@@ -40,34 +40,43 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 
 ## DEC-001 — Initial options market and underlying universe
 
-- **Status:** NEEDS RESEARCH (PROPOSED direction below is conditional only)
+- **Status:** PROPOSED (2026-10-12, Phase 0 desk research) — **not decided; no sample inspected; evidence incomplete**
 - **Context:** MP §2 requires one market and one underlying universe for the first milestone; MP §6 warns against assuming free access to complete historical chains or real-time OPRA. The choice drives data availability, exercise style (DEC-004), liquidity/grid density (DEC-006) and licensing (DEC-002).
+- **Phase 0 findings (details and evidence grades in [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md)):** SPX/SPXW options are European-style and cash-settled (search summary of Cboe materials, G3), which avoids early-exercise modelling; the index forward can be inferred per expiry from put–call parity (method precedent: ORATS, G2 — **unvalidated here**, Q-06). Costs of choosing SPX: **AM-settled (SPX) and PM-settled (SPXW) expiries coexist on one chain**, the expiry cycle has changed over time and a rule filing proposes further change (status unchecked), and the SPX index level in Cboe files requires a ≥ $1,000/month indices licence (avoidable via parity). SPY (American-style, discrete dividends) remains the fallback.
 - **Options:** (a) one broad-index option series; (b) one liquid single-name equity/ETF; (c) a non-US market; (d) a small basket (rejected for v1 by MP §2 "one underlying universe" intent and Phase 7 deferral).
 - **Criteria:** data obtainable under a licence permitting required storage/display; history length; strike/expiry density across the standardized grid; quote quality/liquidity; exercise style simplicity; presence of dividends/corporate actions complexity; relevance to the research questions (RQ-01…09).
 - **Evidence required:** results of [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) for ≥2 candidate (underlying, provider) pairs; a measured count of usable snapshots and per-snapshot strike/expiry counts from a sample.
-- **Recommendation:** none final. *PROPOSED direction (conditional):* evaluate index options before single-name equities, because European-style, cash-settled contracts remove the early-exercise issue flagged in MP §9. Drop this direction if licensing or history makes it infeasible.
-- **Consequences:** fixes `DATA-009`; constrains DEC-002..006; defines what "enough clean historical snapshots" means for the Phase 0 exit.
+- **Recommendation:** *PROPOSED (not final):* **S&P 500 index options (SPX and SPXW roots)** as the single underlying, because European exercise and cash settlement remove the early-exercise issue flagged in MP §9. Conditional on (a) licence conclusions (DEC-002), (b) a measured sample confirming SPX/SPXW presence, density and fields, and (c) a workable AM/PM maturity convention (DEC-005). Fallback: SPY with an American-option model. Drop SPX if any condition fails.
+- **Trade-offs:** SPX — simpler pricing, deep liquidity, but index-level data licensing, mixed AM/PM settlement, and expiry-cycle changes over time (non-stationary chain structure). SPY — one settlement convention and ETF underlying quotes, but American-style pricing, discrete dividends and borrow.
+- **Consequences:** fixes `DATA-009`; constrains DEC-002..006; defines what "enough clean historical snapshots" means for the Phase 0 exit ([PHASE0_FEASIBILITY_PLAN](docs/research/PHASE0_FEASIBILITY_PLAN.md) §2).
 - **Review trigger:** Phase 0 exit review, or discovery that the chosen provider cannot supply the needed history.
 
 ## DEC-002 — Historical data provider and licensing
 
-- **Status:** NEEDS RESEARCH
+- **Status:** PROPOSED lead with **open licensing blockers** (2026-10-12) — not decided; no sample inspected; no account, purchase or download made
 - **Context:** MP §6: "The first technical decision is the data provider." Licence terms govern storage, display, redistribution, and whether a public deployment is possible at all.
+- **Phase 0 findings (see [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) for sources and evidence grades G1/G2/G3/U):**
+  - **C1 SPX × Cboe DataShop EOD Option Quotes** — history from 2012-01, fixed 15:45 ET and end-of-day snapshots, bid/ask/size/OI. **Licence text read directly (G1):** personal/internal business use; no dissemination; computing IV/Greeks internally is expressly allowed; derived data permitted under a three-part test; redistribution (including charts and graphs) to non-affiliates needs a Data Agreement, Order Form/System Description and approval; derived data based on a single index may be fee-liable (interpretation **unresolved**). **Price not published on pages read (U).**
+  - **C2 SPX × Databento OPRA (CBBO-1m)** — from 2013-04, nanosecond UTC timestamps, pay-per-GB historical, $125 new-user credit (G2). **Terms unread (page rendered empty); cost not estimable without an account; plan fees differ between two Databento pages.**
+  - **C3 SPY × ORATS** — 2007→, vendor-computed IV, **prices contradict between pages** ($399 vs $599 one-time; $99 vs $199 delayed API), terms not stated.
+  - **C4 SPX × OptionMetrics via WRDS** — 1996→ EOD, custom licence, **requires institutional access (unknown)**.
+  - Massive (ex-Polygon): quotes only on the $199 plan with "5+ years" → fails the proposed MVD; brokers: not assessed.
 - **Options (categories from MP §6):** licensed market-data vendors; broker APIs; academic/research datasets; public prototyping datasets. Specific vendors are enumerated in [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) as *unverified candidates*.
 - **Criteria:** the nine-row table in MP §6 (coverage, granularity, quote fields, timestamps, adjustments, depth, reliability, licensing, cost/limits); ability to preserve raw responses; reproducibility (stable snapshots/versioning from provider).
-- **Evidence required:** written licence/ToS review per candidate (storage, derived-data display, redistribution, publication of results); price quote or free-tier limits; a sample extract proving field coverage; provider's correction policy.
-- **Recommendation:** none. Do not select a provider from familiarity.
-- **Consequences:** determines `SEC-006`, whether the app can be public (DEC-013), whether `data/samples/` can include any real data (default: no), and the provider adapter design.
+- **Evidence required:** written licence/ToS review per candidate (storage, derived-data display, redistribution, publication of results); price quote or free-tier limits; a sample extract proving field coverage; provider's correction policy. **Outstanding (blockers B1–B7 in the assessment):** Cboe written reply on derived-surface display/publication and fee liability; Cboe price for SPX/SPXW 2012→; Databento terms and cost estimate; owner's professional/non-professional status; intended audience (Q-03); Treasury data reuse terms; owner's WRDS access.
+- **Recommendation:** *PROPOSED (lead, not final):* **C1 — Cboe DataShop End-of-Day Option Quotes for SPX/SPXW**, with **C2 — Databento OPRA CBBO-1m** as the fallback and cross-check. Rationale: C1 is the only candidate whose licence text has been read, and it clearly permits the internal research use planned for Phases 1–4. Weakness: price unknown, public-display rights unresolved. **Do not purchase or subscribe until the owner approves a written price.**
+- **Consequences:** determines `SEC-006`, whether the app can be public (DEC-013; until resolved, plan for local single-user exposure only), whether `data/samples/` can include any real data (default: no), and the provider adapter design.
 - **Review trigger:** any licence/ToS change; cost change; Phase 0 exit.
 
 ## DEC-003 — Historical coverage and snapshot frequency
 
-- **Status:** NEEDS RESEARCH
+- **Status:** PROPOSED (2026-10-12) — conditional on DEC-002; no sample inspected
 - **Context:** MP §6 distinguishes end-of-day, intraday and streaming; MP §12 starts with the next-session surface; MP §23 Ph7 defers intraday.
+- **Phase 0 findings:** Cboe offers a fixed **15:45 ET** snapshot and an end-of-day snapshot per day (history 2012-01→) and separate 1-minute-and-wider interval files; the 15:45 snapshot is described by the vendor as a better reflection of market liquidity than the close (secondary summary, G3). Databento offers per-minute NBBO (2013-04→) from which a fixed-minute daily snapshot can be taken. SPX options trade until 16:15 ET, so a "close" snapshot is product-dependent. Cboe EOD files carry **no per-contract quote timestamp**, so staleness can only be assessed at snapshot level.
 - **Options:** end-of-day (EOD) snapshots; fixed intraday snapshots; streaming.
 - **Criteria:** enough independent surfaces for chronological train/validation/test and walk-forward (a *minimum viable dataset*, to be defined quantitatively in Phase 0); regime diversity (calm and stressed periods, SCI-006); consistency of quote timestamps vs underlying timestamps.
 - **Evidence required:** count of trading days with complete-enough chains; coverage of at least one stressed regime; timestamp alignment audit.
-- **Recommendation:** *PROPOSED (conditional on provider):* EOD snapshots for v1, consistent with MP §22 and the next-trading-day target. Minimum history length is **not** asserted here.
+- **Recommendation:** *PROPOSED (conditional on provider):* **one fixed daily snapshot at 15:45 ET** (or the nearest equivalent the chosen source supports), identical across the whole history, for v1 — consistent with MP §22 and the next-trading-day target. **Minimum history:** proposed ≥ 2,000 daily snapshots with ≥ 95 % of trading days present and ≥ 2 volatility regimes including a stress episode — a *floor*, with a power check from a pilot ([PHASE0_FEASIBILITY_PLAN](docs/research/PHASE0_FEASIBILITY_PLAN.md) §1–§2). These thresholds are proposals until the owner freezes them.
 - **Consequences:** sets sample size ceiling, hence model-capacity limits (DEC-012) and statistical power of conclusions.
 - **Review trigger:** Phase 0 minimum-viable-dataset test fails or passes marginally.
 
@@ -79,6 +88,7 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Criteria:** correctness for the chosen instrument; testability against synthetic known-vol prices (SCI-007); ability to document limitations; compute cost.
 - **Evidence required:** confirmed exercise style, settlement and dividend treatment of the chosen contracts (from contract specs, **verified against the provider's data**); error-magnitude study if a European model is applied to American contracts.
 - **Recommendation:** *PROPOSED:* European model on forward price for European-style instruments only; if DEC-001 selects American-style contracts, either restrict to regions where early-exercise premium is negligible (to be shown, not assumed) or adopt an American model. Never apply a European model silently to American options.
+- **Phase 0 note (2026-10-12):** if DEC-001 settles on SPX/SPXW (European, cash-settled — G3), the European forward-form model applies without early-exercise handling; the forward would be inferred per expiry from put–call parity (to be validated, Q-06), with a rate from a public Treasury series (reuse terms to confirm, B6). Discount-rate sensitivity and parity-forward noise for short maturities must be studied in the feasibility experiment.
 - **Consequences:** defines the `pricing/` module contract, solver bounds, and quote-eligibility rules.
 - **Review trigger:** DEC-001 decided; solver test failures concentrated in deep-ITM/short-maturity regions.
 
@@ -90,6 +100,7 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Criteria:** comparability across dates; independence from rate/dividend assumption noise; invertibility to strikes; behaviour for very short expiries; consistency with pricing model (DEC-004).
 - **Evidence required:** sensitivity of the surface to the choice on a sample; effect on grid density.
 - **Recommendation:** *PROPOSED:* forward log-moneyness and a documented calendar-based year fraction (day-count `OPEN` until DEC-001/004 settle which instruments and settlement times apply). Convention is versioned and recorded in every surface snapshot.
+- **Phase 0 note (2026-10-12):** SPX standard monthly options are AM-settled (value from opening prices on the third Friday) while SPXW weeklies/end-of-month are PM-settled (closing value) — so "time to expiry" at a fixed snapshot differs by settlement convention for the same calendar date. The maturity definition must therefore reference the **settlement time**, not just the expiration date, and the surface convention must say how AM and PM expiries are combined (separate grids, or time-to-settlement as the single axis). Source: search summaries of Cboe materials (G3) — confirm against contract specifications.
 - **Consequences:** fixes the feature and API coordinate semantics; changing it later invalidates stored surfaces (new version required, DATA-004).
 - **Review trigger:** sensitivity study shows material difference; instrument change.
 
@@ -101,6 +112,7 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Criteria:** fidelity to observations at observed nodes; smoothness without inventing structure; behaviour in sparse regions; mask correctness; effect on forecast metrics (RQ-09).
 - **Evidence required:** per-snapshot density statistics; comparison of ≥2 methods on held-out observed points (leave-out reconstruction error) and on downstream baseline metrics.
 - **Recommendation:** none on resolution. *Principle (not a method choice):* start with the most transparent method that supports masks (e.g., linear within the observed hull) as the baseline for comparison.
+- **Phase 0 synthetic finding (2026-10-12, [PHASE0_SYNTHETIC_RESULTS](docs/research/PHASE0_SYNTHETIC_RESULTS.md) §8–§9):** with strikes on a fixed moneyness grid, exact node matching works, but an off-grid strike within the `1e-6` matching tolerance of a node contaminated the cell by slope × distance (≈ 10⁻⁷) in 2 of 19 study runs. Real chains have fixed *price* strikes, so nodes will almost never coincide with strikes: the definition of `observed` (proximity tolerance or snapping) is a real design parameter that trades bias against coverage and must be decided with evidence on real data. Linear interpolation inside the observed hull with a 0.15 gap limit and **no extrapolation** behaved as specified on synthetic data (never mislabelled; 0 extrapolated cells).
 - **Consequences:** determines target dimensionality (DEC-011) and error-region definitions.
 - **Review trigger:** Phase 2 comparison results.
 
@@ -199,6 +211,7 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Options:** `pyproject.toml` with a lock-capable tool (e.g., uv, Poetry, pip-tools); conda/mamba environment files; plain `requirements` files with hashes.
 - **Criteria:** reproducible environments including numeric/ML wheels; CI simplicity; Windows/Linux support; ability to pin hardware-specific builds; lockfile with hashes.
 - **Evidence required:** a clean-machine install test on the target OSes with a pinned numeric stack.
-- **Recommendation:** none yet.
+- **Phase 0 spike scope (2026-10-12, owner-approved work; see [ADR-0003](docs/architecture/ADR/ADR-0003-phase0-spike-toolchain.md), status Proposed):** this does **not** decide the product toolchain. For the synthetic feasibility spike only: **Python 3.12.6** (observed on the development machine, Windows 11 AMD64; tested only there), **standard library only** (`math`, `random`, `statistics`, `bisect`, `collections`, `dataclasses`, `enum`, `typing`, `hashlib`, `json`, `argparse`, `platform`, `sys`, `time`, `pathlib`, `unittest`), **nothing installed**, no manifest/lockfile. numpy, scipy, pandas and pytest are present on the machine but are deliberately **not used** and are **not** adopted. Code lives in `scripts/phase0_synthetic/`, outside product modules, and is disposable. Spike scope: synthetic European option quotes with known injected defects → validation → parity forward → Brent IV solver → surface with observed/interpolated/missing statuses → persistence and walk-forward factor-AR forecasts → hand-checkable metrics and block-bootstrap intervals in two worlds (random-walk, AR(1)); no real data, no neural models, no frontend. The spike's measured runtime and numerical findings feed this decision. **Result (2026-10-12):** the spike was implemented and run under these constraints — 57 `unittest` tests pass; a full 300-day run (≈ 63,000 quotes, ≈ 30,000 implied-volatility solves, walk-forward evaluation) took ≈ 0.8 s on the development machine in pure Python, so pure-Python speed did **not** limit experiments of this size (one machine, one run; see [PHASE0_SYNTHETIC_RESULTS](docs/research/PHASE0_SYNTHETIC_RESULTS.md)). Larger real datasets may still justify vectorized numerics; that is not decided here.
+- **Recommendation:** none yet for the product toolchain.
 - **Consequences:** unlocks creation of the first manifest and lockfile; sets CI setup ([workflows](.github/workflows/)).
 - **Review trigger:** Phase 1 kickoff (first code).

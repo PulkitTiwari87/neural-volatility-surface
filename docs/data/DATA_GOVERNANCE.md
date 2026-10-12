@@ -30,6 +30,8 @@
 
 If any answer is unknown, the source's use is restricted to the narrowest interpretation until clarified.
 
+**Phase 0 status (2026-10-12):** per-candidate answers and the unresolved items are in [DATA_SOURCE_ASSESSMENT](DATA_SOURCE_ASSESSMENT.md) §5 and §7. Only Cboe's agreement and data policies were read directly; all other providers' terms are unread or unstated. Until blockers B1–B4 close, the working assumption is **internal, local, single-user research use only — no public display, no committed data, no sharing of raw files**.
+
 ## 4. Provenance and versioning
 Raw records are immutable; corrections create new versions; every result pins data versions ([DATA_VERSIONING](DATA_VERSIONING.md)). Exclusions are recorded with reasons (GR-DATA-02/03).
 

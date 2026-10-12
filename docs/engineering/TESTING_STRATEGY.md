@@ -1,6 +1,6 @@
 # Testing Strategy
 
-**Status:** PROPOSED (no tests exist; tooling not selected) · **Canonical for:** test categories, minimum scientific test set, fixture policy, CI expectations · **Source:** MP §21, foundation brief §9 · **Related:** [guardrails.md](../../guardrails.md) (what each test enforces), [CLAUDE.md](../../CLAUDE.md) §10
+**Status:** PROPOSED (no product tests exist; product tooling not selected; the disposable Phase 0 spike uses standard-library `unittest` — see [PHASE0_AUDIT](../research/PHASE0_AUDIT.md)) · **Canonical for:** test categories, minimum scientific test set, fixture policy, CI expectations · **Source:** MP §21, foundation brief §9 · **Related:** [guardrails.md](../../guardrails.md) (what each test enforces), [CLAUDE.md](../../CLAUDE.md) §10
 
 ## 1. Categories and locations
 | Category | Location | Purpose |

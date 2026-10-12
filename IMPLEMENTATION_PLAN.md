@@ -19,7 +19,7 @@
 | Phase | Name | Status |
 |---|---|---|
 | F | Repository foundation (this scaffold) | IN_PROGRESS → closes when the audit in the foundation run passes and the owner reviews |
-| 0 | Research and feasibility | PLANNED (next) |
+| 0 | Research and feasibility | IN_PROGRESS — desk research done 2026-10-12; no sample obtained; gate not met (see Phase 0 progress note) |
 | 1 | Data foundation | PLANNED |
 | 2 | Implied volatility and surfaces | PLANNED |
 | 3 | Research dataset and baselines | PLANNED |
@@ -74,6 +74,7 @@ Phase 5 UI work on layout and components may use *synthetic* backend fixtures af
 - **Deliverables:** assessment document; ADRs for DEC-001/002/003/015 (+004/005 draft); `docs/planning` updated with MVD definition & success criteria; sample data policy (nothing licensed committed); feasibility notes.
 - **Expected changes:** `docs/data/*`, `docs/architecture/ADR/*`, `decision.md`, `docs/research/EVALUATION_PROTOCOL.md` (success criteria), possibly `configs/data/` templates. No product code.
 - **Tests/validation:** licence review checklist complete; a recorded dry run of the analytical path on the sample (spike, notebooks may be used under `notebooks/exploratory/`, not as source of truth); count of usable snapshots measured.
+- **Progress note (2026-10-12):** desk research completed — see [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) (candidates, evidence grades, licence analysis, blockers B1–B7) and [PHASE0_FEASIBILITY_PLAN](docs/research/PHASE0_FEASIBILITY_PLAN.md) (proposed MVD, success criteria, synthetic sample, feasibility experiment). DEC-001/002/003 are `PROPOSED` (not decided). **Update 2026-10-12 (later):** the synthetic feasibility experiment was run under owner approval — [ADR-0003](docs/architecture/ADR/ADR-0003-phase0-spike-toolchain.md), pre-registered protocol (plan §9), spike code in `scripts/phase0_synthetic/`, **57 tests pass**, results and disclosed failures/deviations in [PHASE0_SYNTHETIC_RESULTS](docs/research/PHASE0_SYNTHETIC_RESULTS.md); a draft (unsent) email to Cboe is in [CBOE_LICENSING_QUESTIONS](docs/data/CBOE_LICENSING_QUESTIONS.md). **Not yet done:** real sample, written licence replies, cost evidence, amended and frozen thresholds, ADRs for DEC-001/002/003. Synthetic results satisfy only the synthetic part of A5; **A1–A5 remain unmet and the Phase 0 gate is not passed.**
 - **Risks:** no affordable provider with sufficient history/licence (RISK-01); sample not representative; scope creep into building ingestion.
 - **Acceptance criteria:**
   - A1. Written data-source decision with licence conclusions on storage, display, redistribution (links to ADR).

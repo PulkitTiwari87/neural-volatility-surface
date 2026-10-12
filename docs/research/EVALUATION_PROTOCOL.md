@@ -22,6 +22,8 @@ Let *C_t* be the set of comparable cells at origin *t* (grid cells `observed` in
 
 Every metric table includes `n` (cells), `n_origins`, `n_missing` (cells excluded as not comparable) and what was excluded.
 
+*Phase 0 synthetic note ([PHASE0_SYNTHETIC_RESULTS](PHASE0_SYNTHETIC_RESULTS.md) §7, hypothesis Q-27):* when the target surface carries quote noise, a structure-aware forecaster can beat raw persistence slightly even where persistence is optimal for the latent surface. Reports should therefore state whether targets are raw observed cells or denoised, and keep persistence-on-raw as the primary reference.
+
 ## 4. Regional and regime reporting
 - **Regions:** maturity buckets × moneyness buckets (bucket edges set from grid, `TBD(Phase 3)`), plus overall. Cells with `n` below the minimum (`TBD(Phase 3)`) are labelled *insufficient*, not dropped.
 - **Periods:** by calendar blocks / folds.
@@ -38,6 +40,7 @@ The test window is evaluated **once per frozen configuration**; accesses are log
 Daily surfaces are serially dependent, so naive cell-level t-tests overstate significance. Approach to be selected in Phase 3 (`NEEDS RESEARCH`): block bootstrap over origins and/or Diebold–Mariano-type tests on per-origin loss differentials with an appropriate long-run variance estimator. Whatever is chosen is documented, tested on synthetic data with known differences, and reported alongside effect sizes. Do not claim "significant" without it.
 
 ## 8. Success criteria (pre-registered in Phase 0; template)
+*Proposed values for this project (unfrozen) are in [PHASE0_FEASIBILITY_PLAN](PHASE0_FEASIBILITY_PLAN.md) §3; the template below is the record format.*
 ```
 Date registered: ____    Registered by: ____
 Primary comparison: model X vs persistence (and vs regression) on dataset version __
