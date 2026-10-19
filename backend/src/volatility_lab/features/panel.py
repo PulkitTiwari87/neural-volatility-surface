@@ -39,6 +39,12 @@ class Prepared:
     target_status: Optional[np.ndarray] = None
     anchor_changed: Optional[np.ndarray] = None  # (N, C) bool: the nearest-expiry anchor differs at origin vs target
     target_name: str = "nearest_expiry"
+    # Optional (n, n_tenor + 5) calendar block (experiment H3): days-to-expiry of the expiry anchoring each tenor on
+    # that row (nominal tenor when none) and a Monday-Friday one-hot weekday. Row-local: uses only that row's date/quotes.
+    calendar: Optional[np.ndarray] = None
+    # Optional mean-reversion window (experiment H4): adds "surface minus its trailing ``mr_window``-row mean" to the
+    # tabular / PCA features. Causal (rows <= t only). ``None`` = off.
+    mr_window: Optional[int] = None
 
     @property
     def n_cells(self) -> int:
@@ -111,7 +117,17 @@ def fixed_expiry_targets(panel: dict, h: int):
     return ty, tst
 
 
-def prepare(panel: dict, cfg: FeatureConfig, target: str = "nearest_expiry") -> Prepared:
+def calendar_block(panel: dict) -> np.ndarray:
+    """(n, n_tenor + 5): anchoring-expiry days-to-expiry per tenor, then weekday one-hot (Mon..Fri). Known at row t."""
+    d = panel["dates"]
+    dte = panel["anchor_expiry"].astype(float) - d[:, None]
+    dte = np.where(panel["anchor_expiry"] >= 0, dte, panel["tenor_days"][None, :].astype(float))
+    wd = (d + 3) % 7                       # epoch day 0 (1970-01-01) was a Thursday -> Monday = 0
+    return np.hstack([dte, (wd[:, None] == np.arange(5)[None, :]).astype(float)])
+
+
+def prepare(panel: dict, cfg: FeatureConfig, target: str = "nearest_expiry", calendar: bool = False,
+            mr_window: Optional[int] = None) -> Prepared:
     if target not in ("nearest_expiry", "fixed_expiry"):
         raise ValueError(f"unknown target definition: {target}")
     iv, st, tenor, k = flatten_panel(panel)
@@ -131,6 +147,10 @@ def prepare(panel: dict, cfg: FeatureConfig, target: str = "nearest_expiry") -> 
     if target == "fixed_expiry":
         ty, tst = fixed_expiry_targets(panel, h)
         extra.update(target_iv=ty[t], target_status=tst[t])
+    if calendar:
+        extra["calendar"] = calendar_block(panel)
+    if mr_window is not None:
+        extra["mr_window"] = int(mr_window)
     return Prepared(dates=dates, year=year, spot=panel["spot"], iv=iv, status=st, avail=st > 0, rv=rv,
                     cell_tenor=tenor, cell_k=k, origins=t, targets=t + h, horizon=h,
                     n_tenor=len(panel["tenor_days"]), n_k=len(panel["k_nodes"]), target_name=target, **extra)
@@ -159,6 +179,11 @@ def causal_fill(p: Prepared, ffill_days: int, fill_values: np.ndarray) -> np.nda
     return np.where(np.isfinite(out), out, fill_values[None, :])
 
 
+def trailing_mean(a: np.ndarray, w: int) -> np.ndarray:
+    """Mean of rows ``t-w+1..t`` (inclusive of t; shorter windows early on). Causal."""
+    return pd.DataFrame(a).rolling(w, min_periods=1).mean().to_numpy()
+
+
 def tabular_features(p: Prepared, filled: np.ndarray, cfg: FeatureConfig) -> np.ndarray:
     """(N, D): [s_t, s_t - s_{t-lag} for lag in lags, rv_t, availability fraction]. Rows = ``p.origins``."""
     t = p.origins
@@ -167,13 +192,17 @@ def tabular_features(p: Prepared, filled: np.ndarray, cfg: FeatureConfig) -> np.
         parts.append(filled[t] - filled[t - lag])
     parts.append(p.rv[t])
     parts.append(p.avail[t].mean(axis=1, keepdims=True))
+    if p.calendar is not None:
+        parts.append(p.calendar[t])
+    if p.mr_window is not None:
+        parts.append(filled[t] - trailing_mean(filled, p.mr_window)[t])
     return np.hstack(parts)
 
 
 def sequence_features(p: Prepared, filled: np.ndarray, cfg: FeatureConfig) -> np.ndarray:
     """(N, L, 2C + n_rv): per day [filled surface, availability mask, realised vols] for rows t-L+1..t."""
     L = cfg.seq_len
-    day = np.hstack([filled, p.avail.astype(float), np.nan_to_num(p.rv)])
+    day = np.hstack([filled, p.avail.astype(float), np.nan_to_num(p.rv)] + ([p.calendar] if p.calendar is not None else []))
     idx = p.origins[:, None] + np.arange(-L + 1, 1)[None, :]
     return day[idx]
 

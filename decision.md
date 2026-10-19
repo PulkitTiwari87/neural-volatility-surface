@@ -18,12 +18,12 @@
 
 | ID | Decision | Status | Blocks | Owner role |
 |---|---|---|---|---|
-| DEC-001 | Initial options market & underlying universe | PROPOSED (SPX/SPXW; evidence incomplete) | Phase 0 exit, all later | Project owner / quant lead |
-| DEC-002 | Historical data provider & licensing | PROPOSED lead (Cboe DataShop; licensing blockers open) | Phase 1 start | Project owner / data engineer |
-| DEC-003 | Historical coverage & snapshot frequency | PROPOSED (daily 15:45 ET snapshot; MVD thresholds unfrozen) | Phase 0 exit | Quant lead / data engineer |
+| DEC-001 | Initial options market & underlying universe | **INTERIM DECISION 2026-10-19 (owner): SPY** for the private research track (SPX/SPXW deferred) | Phase 0 exit, all later | Project owner / quant lead |
+| DEC-002 | Historical data provider & licensing | **INTERIM DECISION 2026-10-19 (owner): use the hosted Kaggle SPY dataset (OptionsDX-origin, upstream licence unverified) for PRIVATE research only**; Cboe DataShop stays the lead for any public/SPX upgrade, blockers open | Phase 1 start | Project owner / data engineer |
+| DEC-003 | Historical coverage & snapshot frequency | **INTERIM DECISION 2026-10-19 (owner): daily end-of-day snapshot, 2010-01-04 to 2023-12-29 (3,500 surface dates)**, as in the hosted dataset; MVD thresholds still unfrozen | Phase 0 exit | Quant lead / data engineer |
 | DEC-004 | Initial pricing model & instrument assumptions | PROPOSED (conditional on DEC-001) | Phase 2 | Quant lead |
 | DEC-005 | Moneyness convention & maturity definition | PROPOSED | Phase 2 | Quant lead |
-| DEC-006 | Surface grid & interpolation method | NEEDS RESEARCH | Phase 2 exit | Quant lead |
+| DEC-006 | Surface grid & interpolation method | **DECIDED (option A) 2026-10-19 (owner):** keep current rules (6 tenors x 9 log-moneyness nodes, linear-in-IV in k, no extrapolation) as the documented baseline; alternatives only via the harness under a pre-registered replacement rule | Phase 2 exit | Quant lead |
 | DEC-007 | Backend API framework | PROPOSED | Phase 5 (API) | Backend lead |
 | DEC-008 | Frontend framework & charting/3D technology | NEEDS RESEARCH | Phase 5 | Frontend lead |
 | DEC-009 | Storage & analytical file formats | PROPOSED | Phase 1 (raw store) | Data engineer |
@@ -37,6 +37,12 @@
 DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the licence be documented as open, and no manifest/lockfile may be created until DEC-015 is decided.
 
 ---
+
+
+### Owner decisions of 2026-10-19 (recorded verbatim in effect; chat)
+
+- **DEC-001 / DEC-002 / DEC-003 (interim):** continue with the hosted SPY end-of-day dataset as the **private** research dataset so Phases 1-5 can progress; no public display, no redistribution of data or chain-level derived files. This is an *interim* choice because the upstream (OptionsDX) licence is unverified ([HOSTED_DATASET_ASSESSMENT](docs/data/HOSTED_DATASET_ASSESSMENT.md)); it does not settle DEC-013 (public deployment) or lift the Cboe blockers. Review trigger: any intent to publish or show results/surfaces outside the owner's machine, or a licence reply. The unsent Cboe inquiry ([CBOE_LICENSING_QUESTIONS](docs/data/CBOE_LICENSING_QUESTIONS.md)) is a draft only the owner can send (needs the owner's name/status); it is not required for the private track.
+- **DEC-006 (option A):** keep the production surface rules as the baseline; evaluate alternatives on this dataset with the unchanged harness under a pre-registered replacement rule (to be written before running, per [PHASE2_SURFACE_COMPARISON](docs/research/PHASE2_SURFACE_COMPARISON.md) §8).
 
 ## DEC-001 — Initial options market and underlying universe
 

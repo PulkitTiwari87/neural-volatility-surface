@@ -18,7 +18,7 @@ import pandas as pd
 from volatility_lab.config.settings import Config
 from volatility_lab.evaluation.metrics import eval_mask
 from volatility_lab.evaluation.walkforward import Fold
-from volatility_lab.features.panel import Prepared, tabular_features, target_arrays
+from volatility_lab.features.panel import Prepared, tabular_features, target_arrays, trailing_mean
 
 
 def standardize_fit(X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -92,6 +92,10 @@ def predict_baselines(p: Prepared, fold: Fold, filled: np.ndarray, cfg: Config) 
     Z = (filled - mean_s) @ V.T                                  # (n, K) scores of every row
     z_t = Z[org]
     parts = [z_t] + [z_t - Z[org - lag] for lag in fc.lags] + [p.rv[org], p.avail[org].mean(axis=1, keepdims=True)]
+    if p.calendar is not None:
+        parts.append(p.calendar[org])
+    if p.mr_window is not None:
+        parts.append(z_t - trailing_mean(Z, p.mr_window)[org])
     Xz = np.hstack(parts)
     muz, sdz = standardize_fit(Xz[fold.train])
     Xzs = (Xz - muz) / sdz

@@ -26,13 +26,29 @@ class Fold:
     train_rows_end: int  # last panel row any training label touches (for fitting fill values)
 
 
-def make_folds(p: Prepared, cfg: SplitConfig) -> List[Fold]:
+def make_folds(p: Prepared, cfg: SplitConfig, val_mode: str = "prev_year", val_frac: float = 0.2) -> List[Fold]:
+    """``val_mode='prev_year'`` is E-1/E-2. ``'tail_frac'`` (experiment H2) validates on the chronologically last
+    ``val_frac`` of the origins available before the test year (labels purged against the test period); training =
+    the earlier origins whose labels end before the first validation origin. ``Fold.val_year`` is then only a label."""
+    if val_mode not in ("prev_year", "tail_frac"):
+        raise ValueError(f"unknown val_mode: {val_mode}")
     oyear = p.year[p.origins]
     odate = p.dates[p.origins]
     tdate = p.dates[p.targets]
     folds = []
     for Y in range(cfg.first_test_year, cfg.last_test_year + 1):
         test = np.flatnonzero(oyear == Y)
+        if val_mode == "tail_frac":
+            pool = np.flatnonzero((oyear < Y) & (tdate < odate[test].min())) if test.size else test
+            if pool.size == 0:
+                continue
+            n_val = max(1, int(np.ceil(val_frac * pool.size)))
+            val, train = pool[-n_val:], pool[:-n_val]
+            train = train[tdate[train] < odate[val].min()]
+            if len(np.unique(oyear[train])) < cfg.min_train_years or train.size == 0:
+                continue
+            folds.append(Fold(Y, Y - 1, train, val, test, int(p.targets[train].max())))
+            continue
         val = np.flatnonzero(oyear == Y - 1)
         if test.size == 0 or val.size == 0:
             continue

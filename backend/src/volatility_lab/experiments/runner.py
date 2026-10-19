@@ -89,8 +89,20 @@ def run_baselines(p: Prepared, folds: List[Fold], cfg: Config, log=print):
     return preds, chosen
 
 
-def run_neural(p: Prepared, folds: List[Fold], cfg: Config, out_dir, *, torch_module=None, log=print):
-    """Train/predict every (fold, model, seed); resumes from files already present in ``out_dir``."""
+def pca_factor_targets(s_all, D, M_, train, k):
+    """Factor-space targets for experiment H5: basis ``V`` (k, C) from the TRAINING surfaces only; ``D`` -> its projection
+    (missing-label cells = no change), loss mask all True."""
+    mean_s = s_all[train].mean(axis=0)
+    V = np.linalg.svd(s_all[train] - mean_s, full_matrices=False)[2][:k]
+    return np.where(M_, D, 0.0) @ V.T, np.ones((D.shape[0], k), dtype=bool), V
+
+
+def run_neural(p: Prepared, folds: List[Fold], cfg: Config, out_dir, *, torch_module=None, log=print, pca_factors=None):
+    """Train/predict every (fold, model, seed); resumes from files already present in ``out_dir``.
+
+    ``pca_factors=K`` (experiment H5): the network predicts the K PCA-factor changes (basis fitted on the training
+    surfaces of the fold only, as in the PCA-ridge baseline) instead of every cell; the cell forecast is
+    ``s_t + delta_z @ V``. Cells without a label count as "no change". Loss weights are all ones."""
     from volatility_lab.models import neural  # lazy: needs PyTorch + CUDA
     device = neural.require_cuda(torch_module)  # raises before any work (or any file) when no GPU
     log(f"GPU: {device}")
@@ -105,6 +117,8 @@ def run_neural(p: Prepared, folds: List[Fold], cfg: Config, out_dir, *, torch_mo
         y_all, ystat = target_arrays(p)
         D = y_all - s_all
         M_ = (ystat > 0) & np.isfinite(D)
+        if pca_factors:
+            D, M_, V = pca_factor_targets(s_all, D, M_, f.train, pca_factors)
         feats = {}
         if "mlp" in cfg.train.models:
             feats["mlp"] = tabular_features(p, filled, cfg.features)
@@ -130,7 +144,7 @@ def run_neural(p: Prepared, folds: List[Fold], cfg: Config, out_dir, *, torch_mo
                     np.save(pf, delta)
                     hf.write_text(json.dumps(r, indent=1))
                     log(f"{tag}: epochs={r['epochs_run']} best_epoch={r['best_epoch']} {r['seconds']}s peak_mem={r['peak_gpu_mem_mb']}MB")
-                preds[f.test_year][f"{kind}_s{seed}"] = s_all[f.test] + delta
+                preds[f.test_year][f"{kind}_s{seed}"] = s_all[f.test] + (delta @ V if pca_factors else delta)
             stack = np.stack([preds[f.test_year][f"{kind}_s{s}"] for s in cfg.train.seeds])
             preds[f.test_year][f"{kind}_ens"] = stack.mean(axis=0)
     return preds, device

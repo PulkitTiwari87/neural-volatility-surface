@@ -74,7 +74,8 @@ else:
 H_SETUP = "## 4. Environment setup\nOnly `kagglehub` is installed (pinned); NumPy, pandas, SciPy, PyArrow, Matplotlib and PyTorch come with Colab. The package source follows as `%%writefile` cells (generated from `backend/src/volatility_lab`; do not edit here)."
 
 SETUP_PIP = r"""import importlib.util, os, subprocess, sys
-ON_KAGGLE = os.path.exists("/kaggle/input")          # Kaggle Notebook: the dataset is attached natively, no client needed
+# Kaggle Notebook: the dataset is attached natively, no client needed. Colab can also create an EMPTY /kaggle/input (dataset side panel), so require a Kaggle kernel env var or a non-Colab runtime.
+ON_KAGGLE = os.path.exists("/kaggle/input") and (bool(os.environ.get("KAGGLE_KERNEL_RUN_TYPE")) or importlib.util.find_spec("google.colab") is None)
 if not ON_KAGGLE and importlib.util.find_spec("kagglehub") is None:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "kagglehub==0.4.3"], check=True)
 print("environment:", "Kaggle Notebook" if ON_KAGGLE else "Colab / other", "| kagglehub", "not needed" if ON_KAGGLE else "ready")

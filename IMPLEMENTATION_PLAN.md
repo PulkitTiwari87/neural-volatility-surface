@@ -18,7 +18,7 @@
 
 | Phase | Name | Status |
 |---|---|---|
-| F | Repository foundation (this scaffold) | IN_PROGRESS → closes when the audit in the foundation run passes and the owner reviews. 2026-10-16: mechanical audit passes ([FOUNDATION_AUDIT](docs/engineering/FOUNDATION_AUDIT.md)); owner acceptance not recorded; gate not met |
+| F | Repository foundation (this scaffold) | **ACCEPTED by the project owner 2026-10-19** (in chat). Mechanical audit passes ([FOUNDATION_AUDIT](docs/engineering/FOUNDATION_AUDIT.md)); the acceptance criterion "no code, dependency manifest, data, or results" is superseded by later owner-directed work (Phase 0 spike, E-1..H3), not a violation to fix; gate met |
 | 0 | Research and feasibility | IN_PROGRESS — desk research done 2026-10-12; no sample obtained; gate not met (see Phase 0 progress note) |
 | 1 | Data foundation | IN_PROGRESS (partial, 2026-10-14) - local write-once raw store, versioned datasets and conserved ledgers exist and are tested (`storage/raw_store.py`); no real-provider adapter, no CI, no timezone/holiday fixtures; **gate not claimed** (Phase 0 gate unmet) |
 | 2 | Implied volatility and surfaces | IN_PROGRESS (partial, 2026-10-16; was mislabelled PLANNED) - vectorised Black-76/IV, constant-maturity grid with cell status, diagnostics and a comparison harness exist and are tested on synthetic data (deterministic recovery grid, interpolation/filter comparison: [PHASE2_SURFACE_COMPARISON](docs/research/PHASE2_SURFACE_COMPARISON.md)); A5 / DEC-006 undecided, per-quote solver diagnostics not stored, Phase 1 gate unmet; **gate not claimed** |

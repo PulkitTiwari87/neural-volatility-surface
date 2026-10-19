@@ -22,6 +22,7 @@ import cells  # noqa: E402  (cell text lives next to this script)
 import cells_e2  # noqa: E402
 import cells_h1  # noqa: E402
 import cells_h1b  # noqa: E402
+import cells_h23  # noqa: E402
 OUT_E2 = ROOT / "notebooks" / "Neural_Volatility_Surface_E2_FixedExpiry.ipynb"
 OUT_H1 = ROOT / "notebooks" / "Neural_Volatility_Surface_H1_RidgeGrid.ipynb"
 OUT_H1B = ROOT / "notebooks" / "Neural_Volatility_Surface_H1b_FixedExpiryGrid.ipynb"
@@ -147,10 +148,48 @@ def build_h1b() -> nbf.NotebookNode:
     return nb
 
 
+def build_h23(name: str) -> nbf.NotebookNode:
+    """Experiments H2 / H3 (pre-registered 2026-10-19): the E-2 pipeline (GPU, both labels) with ONE change each."""
+    v = cells_h23.VARIANTS[name]
+    nb = nbf.v4.new_notebook()
+    md, code = nbf.v4.new_markdown_cell, nbf.v4.new_code_cell
+    c = ([md(cells_h23.overview(v)), md(cells.H_CONFIG), code(cells_h23.config(v))]
+         + ([md(cells.H_GPU), code(cells.GPU)] if v["gpu"] else [])
+         + [md(cells.H_SETUP), code(cells.SETUP_PIP)])
+    mods = sorted(p for p in (SRC / "volatility_lab").rglob("*.py") if "__pycache__" not in p.parts)
+    dirs = sorted({str(m.parent.relative_to(SRC)).replace("\\", "/") for m in mods})
+    c.append(code("import os\nfor d in " + repr(dirs) + ":\n    os.makedirs(f'/content/nvs/src/{d}', exist_ok=True)\nprint('package directories ready')"))
+    for m in mods:
+        rel = m.relative_to(SRC).as_posix()
+        c.append(code(f"%%writefile /content/nvs/src/{rel}\n" + m.read_text(encoding="utf-8").rstrip("\n") + "\n"))
+    c += [code(cells_h23.IMPORTS)] + ([code(cells.GPU_SMOKE)] if v["gpu"] else []) + [
+          md(cells.H_DATA), code(cells.DATA_CONNECT),
+          md(cells.H_AUDIT), code(cells.AUDIT),
+          md(cells_e2.H_FEATURES), code(cells_h23.FEATURES),
+          md(cells_e2.H_BASE), code(cells_e2.BASELINES),
+          md(cells_e2.H_NEURAL), code(cells_h23.neural_cell(v)),
+          md(cells_e2.H_EVAL), code(cells_h23.eval_cell(v)),
+          md(cells_h23.H_RULE), code(cells_h23.RULE),
+          md(cells_e2.H_EXTRA), code(cells_e2.EXTRA_HEAD + cells.EXTRA_PLOTS + cells_e2.EXTRA_TAIL + cells_e2.EXTRA_LOOP),
+          md(cells_e2.H_INTERP), code(cells_e2.INTERP),
+          md(cells_e2.H_SAVE), code(cells_h23.save(v)),
+          md(cells.H_REPRO)]
+    nb.cells = c
+    nb.metadata = {"colab": {"name": v["file"] + ".ipynb", "provenance": [], "gpuType": "T4"} if v["gpu"] else {"name": v["file"] + ".ipynb", "provenance": []},
+                   **({"accelerator": "GPU"} if v["gpu"] else {}),
+                   "kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"},
+                   "language_info": {"name": "python"}}
+    return nb
+
+
 if __name__ == "__main__":
     OUT.parent.mkdir(parents=True, exist_ok=True)
     for builder, target in ((build, OUT), (build_e2, OUT_E2), (build_h1, OUT_H1), (build_h1b, OUT_H1B)):
         nb = builder()
         nbf.validate(nb)
         nbf.write(nb, target)
+    for key, v in cells_h23.VARIANTS.items():
+        nb = build_h23(key)
+        nbf.validate(nb)
+        nbf.write(nb, ROOT / "notebooks" / (v["file"] + ".ipynb"))
         print(f"wrote {target.relative_to(ROOT)}  ({len(nb.cells)} cells)")
