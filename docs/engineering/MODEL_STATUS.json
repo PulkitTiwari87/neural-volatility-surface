@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "in_progress",
+  "updated_at": "2026-10-16T00:00:00Z",
+  "confirmed_by": null,
+  "written_by": "core research and engineering session (never sets status to complete; the owner confirms and instructs the dashboard session in chat)",
+  "model_interface": {
+    "run_directory_contract": "docs/architecture/API_CONTRACTS.md section 8 (and the api/service.py docstring)",
+    "forecast_file": "forecasts/<model>.npz {target_index, origin_index (strictly before target), pred (n, tenors, k)}",
+    "inference_entry_point": "none; the UI consumes stored files only"
+  },
+  "available_artifacts": [],
+  "available_artifacts_note": "No run directory is stored in the repository or on this computer. A synthetic demo run is generated locally by scripts/make_synthetic_run.py. The real E-1/E-2 outputs are on the owner's private Kaggle account; their use here is gated by the unverified hosted-dataset licence.",
+  "completed_validation": [
+    {"name": "backend unit + scientific tests", "command": "cd backend && PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "110 tests OK, 1 skipped (CUDA), plus tests.unit.test_architecture_imports 4 tests OK (added after the run started)", "date": "2026-10-16"},
+    {"name": "phase 0 spike tests (stdlib)", "command": "cd scripts/phase0_synthetic && python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "145 tests OK", "date": "2026-10-16"},
+    {"name": "foundation audit", "command": "python scripts/foundation_audit.py", "result": "exit 0; 712 links, 0 broken; 0 undefined IDs; 0 secret hits; 0 tracked data files", "date": "2026-10-16"}
+  ],
+  "results_status": "descriptive backtests only (hosted SPY end-of-day data, unverified upstream licence); no neural model beat persistence; no significance, calibration or trading claim (KNOWN_LIMITATIONS L-22)",
+  "known_blockers": [
+    "Phase 0 real-data feasibility blocked (provider terms, price, permitted sample not obtained)",
+    "Hosted dataset upstream licence unverified: owner decision needed before real runs are displayed",
+    "DEC-006 (grid and interpolation) undecided; Phase 2 gate not met",
+    "Neural work needs a verified GPU (local torch is a CPU build); no CUDA install approved",
+    "API gaps G1-G6 in API_CONTRACTS section 8 are proposals awaiting review by both sessions"
+  ]
+}

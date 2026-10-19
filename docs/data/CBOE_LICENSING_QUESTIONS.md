@@ -10,7 +10,44 @@
 - [ ] Consider asking your institution's counsel or library to review if the use may become commercial or public.
 - [ ] Keep Cboe's replies verbatim (with headers/dates) and file them with the DEC-002 ADR. Verbal answers do not count as evidence.
 
-## 2. Draft email
+## 2. Final draft (v2 — concise; preferred for sending)
+
+**Not sent.** v2 compresses the 22 questions of §2B into seven numbered groups and adds the sample request. Bracketed fields are for the owner to complete truthfully. The 20 sample dates follow a **mechanical rule fixed before any data is seen**: the first trading day on or after the 15th of every eighth month, January 2012 → September 2024 (2012-01, 2012-09, 2013-05, 2014-01, 2014-09, 2015-05, 2016-01, 2016-09, 2017-05, 2018-01, 2018-09, 2019-05, 2020-01, 2020-09, 2021-05, 2022-01, 2022-09, 2023-05, 2024-01, 2024-09). The rule spreads dates over the history; it does **not** guarantee a stress episode, so this sample can test the pipeline and data structure but cannot support regime claims (PHASE0_FEASIBILITY_PLAN M5). The owner may substitute a different pre-registered rule before sending.
+
+**To:** marketdata@cboe.com *(confirm the address and any DataShop support address first — checklist §1)*
+**Subject:** Pricing, licensing and a small historical sample — DataShop SPX/SPXW end-of-day option quotes (non-commercial research)
+
+Dear Cboe Market Data team,
+
+I am [OWNER NAME], [individual researcher / student / researcher at INSTITUTION — be exact]. I am evaluating Cboe DataShop historical option data for a **non-commercial research project** and would be grateful for written answers to the questions below **before** I create an account, accept any agreement, or place any order.
+
+**Intended use.** Licence historical end-of-day option quotes for S&P 500 index options (SPX and SPXW), January 2012 onward, and use them internally to validate the quotes, compute implied volatilities myself from bid/ask midpoints, build standardized implied-volatility surfaces on a fixed moneyness/maturity grid, and evaluate surface-forecasting models out of sample. Results would be shown in a local research application and possibly in research write-ups. There would be no trading, no investment advice, no sale or redistribution of raw quotes, and no real-time or delayed distribution. [OWNER: correct or add anything, e.g. thesis/paper, any possible commercial or public use.]
+
+I have read the *Historical Market Data Subscriber Agreement* (2022-05-27) and the *North American Data Policies* (effective 2026-09-01).
+
+**1. Sample.** Before any purchase, I would like to test my pipeline on a small sample: about **20 trading dates**, SPX and SPXW, all listed expirations and strikes, both the 15:45 ET and end-of-day snapshots, [with / without] Calcs. The dates are the first trading day on or after the 15th of 2012-01, 2012-09, 2013-05, 2014-01, 2014-09, 2015-05, 2016-01, 2016-09, 2017-05, 2018-01, 2018-09, 2019-05, 2020-01, 2020-09, 2021-05, 2022-01, 2022-09, 2023-05, 2024-01 and 2024-09 [or substitute]. (a) Is such a sample available, free or paid? (b) What do the "Download sample" files contain (dates, symbols, fields) and what terms govern them? (c) May I keep and use sample files to test software, and may I keep them afterwards? (d) If no sample is offered, what is the smallest purchasable unit (single day, month) and its price?
+
+**2. Pricing.** What is the price of the full history (January 2012 – present) of SPX and SPXW end-of-day option quotes, with and without Calcs? Please state the unit (per root, file, month of data, or full market), whether it is one-time or a subscription, and the effective date of the price list. Are there academic, student or individual non-commercial rates? Do any additional fees apply to my use (Global Indices licence, OPRA or professional-status fees)?
+
+**3. Content and fields.** Please confirm for these products: (a) all SPX and SPXW series are included every trading day since January 2012, and any known gaps or coverage changes; (b) which field identifies AM-settled SPX versus PM-settled SPXW expirations; (c) whether there is a **per-contract quote timestamp** or only snapshot-level timing, and the exact time of the end-of-day snapshot; (d) the fields delivered (bid, ask, sizes, volume, open interest, underlying values), and whether SPX index levels are included without a Cboe Global Indices licence; (e) if I infer forwards from the option quotes and use no Cboe index levels, whether any additional licence is needed; (f) whether files are ever corrected or restated after delivery.
+
+**4. Agreements.** Should I register as an Individual or a Firm given [my status]? Is the 2022-05-27 Subscriber Agreement the current agreement for these products, and which Data Policies version applies to purchases today? Are any further documents required (Data Agreement, Order Form, System Description)?
+
+**5. Derived data.** Does a standardized implied-volatility surface computed by me from the quotes (grid values, partly interpolated), and a forecast of such a surface, qualify as Derived Data for internal use? The Data Policies describe Derived Data as generally not fee-liable unless it resembles price data or is based on a single index. Is an SPX volatility surface considered fee-liable, and does the answer differ for coarse grids or for aggregates such as error metrics and daily at-the-money volatility series?
+
+**6. Display and publication.** Which of the following need a Data Agreement, Order Form/System Description, approval or fees: (a) display to me only, locally; (b) display to a few invited collaborators; (c) a public website; (d) static figures or tables in a paper, thesis, presentation or blog post; (e) publishing grid-point surface values or daily derived series for reproducibility; (f) publishing source code and **synthetic** test data in the file format (no Cboe data) in a public repository? Does the redistribution rule for "charts, graphs and other presentations" apply to charts of derived surfaces?
+
+**7. Retention.** On cancellation or termination, must stored files be deleted, and may I keep derived surfaces, trained models and published figures? May I keep backups of purchased files for the duration of the project?
+
+I would appreciate **written** replies (a reply to this email is sufficient), and I am happy to clarify the project or complete any forms. If another team is better placed to answer, please forward this message or tell me whom to contact.
+
+Thank you,
+[OWNER NAME]
+[Affiliation / status] · [Email]
+
+**Mapping to the reply log (§3) and §4 table:** v2 group 1 = v1 Q22 (+ Q-23); 2 = Q6–Q8; 3 = Q1–Q5; 4 = Q9–Q11; 5 = Q12–Q14; 6 = Q15–Q19; 7 = Q20–Q21. Log replies by v2 group; the §4 table applies unchanged.
+
+## 2B. Extended question list (v1, reference; 22 questions)
 
 **To:** marketdata@cboe.com *(and/or DataShop support — see checklist)*
 **Cc:** [OPTIONAL: your institutional contact]

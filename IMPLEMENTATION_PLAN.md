@@ -1,6 +1,6 @@
 # IMPLEMENTATION_PLAN.md — Phased Implementation Plan
 
-**Status:** PROPOSED (plan only; **no phase has started**).
+**Status:** PROPOSED. Phase 0 is in progress; partial engineering work on Phases 1, 3 and 5 exists (see Status table); no gate is passed.
 **Canonical for:** phase scope, deliverables, acceptance criteria, exit gates, out-of-scope lists. Roadmap and exit criteria are preserved from MP §23; each phase adds measurable acceptance criteria.
 **Related:** [PR.md](PR.md) · [decision.md](decision.md) · [guardrails.md](guardrails.md) · [architecture.md](architecture.md) · [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) · [docs/planning/MILESTONES.md](docs/planning/MILESTONES.md) · [docs/planning/RISKS.md](docs/planning/RISKS.md)
 
@@ -18,15 +18,17 @@
 
 | Phase | Name | Status |
 |---|---|---|
-| F | Repository foundation (this scaffold) | IN_PROGRESS → closes when the audit in the foundation run passes and the owner reviews |
+| F | Repository foundation (this scaffold) | IN_PROGRESS → closes when the audit in the foundation run passes and the owner reviews. 2026-10-16: mechanical audit passes ([FOUNDATION_AUDIT](docs/engineering/FOUNDATION_AUDIT.md)); owner acceptance not recorded; gate not met |
 | 0 | Research and feasibility | IN_PROGRESS — desk research done 2026-10-12; no sample obtained; gate not met (see Phase 0 progress note) |
-| 1 | Data foundation | PLANNED |
-| 2 | Implied volatility and surfaces | PLANNED |
-| 3 | Research dataset and baselines | PLANNED |
-| 4 | Neural forecasting | PLANNED |
-| 5 | Visualization and research UI | PLANNED |
-| 6 | Reliability and release | PLANNED |
+| 1 | Data foundation | IN_PROGRESS (partial, 2026-10-14) - local write-once raw store, versioned datasets and conserved ledgers exist and are tested (`storage/raw_store.py`); no real-provider adapter, no CI, no timezone/holiday fixtures; **gate not claimed** (Phase 0 gate unmet) |
+| 2 | Implied volatility and surfaces | IN_PROGRESS (partial, 2026-10-16; was mislabelled PLANNED) - vectorised Black-76/IV, constant-maturity grid with cell status, diagnostics and a comparison harness exist and are tested on synthetic data (deterministic recovery grid, interpolation/filter comparison: [PHASE2_SURFACE_COMPARISON](docs/research/PHASE2_SURFACE_COMPARISON.md)); A5 / DEC-006 undecided, per-quote solver diagnostics not stored, Phase 1 gate unmet; **gate not claimed** |
+| 3 | Research dataset and baselines | IN_PROGRESS (partial, 2026-10-14) - E-1/E-2 package covers features, purged walk-forward, leakage audit, baselines and per-region metrics with `insufficient_n` flags; no frozen minimum-sample thresholds from Phase 0, no go/no-go note; **gate not claimed** |
+| 4 | Neural forecasting | IN_PROGRESS (partial, 2026-10-16; was mislabelled PLANNED) - GPU-only MLP/GRU exist; E-1/E-2 were executed off-machine on Kaggle T4 (descriptive, hosted data of unverified licence): **no neural model beat persistence**; audit and experiment plan in [PHASE4_NEURAL_EVIDENCE_REVIEW](docs/research/PHASE4_NEURAL_EVIDENCE_REVIEW.md); Phase 3 gate unmet, no test-access log, GR-MOD-01 not enforced in code, DEC-012 undecided; **gate not claimed** |
+| 5 | Visualization and research UI | IN_PROGRESS (partial, 2026-10-14) - local read-only stdlib API + static 2D viewer with origin banner, status symbols and lineage, tested; no 3D view, forecast-vs-actual grids only for stored forecast files (2026-10-15; synthetic persistence demo, no model forecast displayed), framework choice (DEC-007/008) still open; **gate not claimed** |
+| 6 | Reliability and release | PLANNED (independent pieces exist, 2026-10-16: scientific test directory, import-direction test, `scripts/foundation_audit.py`, an unverified proposed CI workflow; no authentication, deployment, recovery drill or licence decision) |
 | 7 | Advanced research extensions | DEFERRED |
+
+Per-phase detail (implementation, evidence, tests run, gate status, dependencies, owner decisions) is kept in [docs/engineering/CORE_STATUS.md](docs/engineering/CORE_STATUS.md); phase scope and gates below stay canonical here. Nothing in this table claims a passed gate.
 
 ## 2. Dependency graph
 
@@ -74,7 +76,7 @@ Phase 5 UI work on layout and components may use *synthetic* backend fixtures af
 - **Deliverables:** assessment document; ADRs for DEC-001/002/003/015 (+004/005 draft); `docs/planning` updated with MVD definition & success criteria; sample data policy (nothing licensed committed); feasibility notes.
 - **Expected changes:** `docs/data/*`, `docs/architecture/ADR/*`, `decision.md`, `docs/research/EVALUATION_PROTOCOL.md` (success criteria), possibly `configs/data/` templates. No product code.
 - **Tests/validation:** licence review checklist complete; a recorded dry run of the analytical path on the sample (spike, notebooks may be used under `notebooks/exploratory/`, not as source of truth); count of usable snapshots measured.
-- **Progress note (2026-10-12):** desk research completed — see [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) (candidates, evidence grades, licence analysis, blockers B1–B7) and [PHASE0_FEASIBILITY_PLAN](docs/research/PHASE0_FEASIBILITY_PLAN.md) (proposed MVD, success criteria, synthetic sample, feasibility experiment). DEC-001/002/003 are `PROPOSED` (not decided). **Update 2026-10-12 (later):** the synthetic feasibility experiment was run under owner approval — [ADR-0003](docs/architecture/ADR/ADR-0003-phase0-spike-toolchain.md), pre-registered protocol (plan §9), spike code in `scripts/phase0_synthetic/`, **57 tests pass**, results and disclosed failures/deviations in [PHASE0_SYNTHETIC_RESULTS](docs/research/PHASE0_SYNTHETIC_RESULTS.md); a draft (unsent) email to Cboe is in [CBOE_LICENSING_QUESTIONS](docs/data/CBOE_LICENSING_QUESTIONS.md). **Not yet done:** real sample, written licence replies, cost evidence, amended and frozen thresholds, ADRs for DEC-001/002/003. Synthetic results satisfy only the synthetic part of A5; **A1–A5 remain unmet and the Phase 0 gate is not passed.**
+- **Progress note (2026-10-12):** desk research completed — see [DATA_SOURCE_ASSESSMENT](docs/data/DATA_SOURCE_ASSESSMENT.md) (candidates, evidence grades, licence analysis, blockers B1–B7) and [PHASE0_FEASIBILITY_PLAN](docs/research/PHASE0_FEASIBILITY_PLAN.md) (proposed MVD, success criteria, synthetic sample, feasibility experiment). DEC-001/002/003 are `PROPOSED` (not decided). **Update 2026-10-12 (later):** the synthetic feasibility experiment was run under owner approval — [ADR-0003](docs/architecture/ADR/ADR-0003-phase0-spike-toolchain.md), pre-registered protocol (plan §9), spike code in `scripts/phase0_synthetic/`, **57 tests passed at first run, 112 after the audit and A2d** ([PHASE0_AUDIT](docs/research/PHASE0_AUDIT.md); protocol amendments in [decision.md](decision.md): PA-1 closed NO-GO (2026-10-13), PA-2…PA-5 unsigned/open), results and disclosed failures/deviations in [PHASE0_SYNTHETIC_RESULTS](docs/research/PHASE0_SYNTHETIC_RESULTS.md); a draft (unsent) email to Cboe is in [CBOE_LICENSING_QUESTIONS](docs/data/CBOE_LICENSING_QUESTIONS.md). **Not yet done:** real sample, written licence replies, cost evidence, amended and frozen thresholds, ADRs for DEC-001/002/003. Synthetic results satisfy only the synthetic part of A5; **The Phase 0 gate is not passed** (A5 and the synthetic part of A4 are met on labelled synthetic data only; A1 and A3 are not tested, A2 and the real-data part of A4 are not approved). **Closure proposal (2026-10-13):** [PHASE0_CLOSURE_RECORD](docs/research/PHASE0_CLOSURE_RECORD.md) records each criterion's status and records the owner's acceptance (2026-10-13) of CLOSED — NO-GO for the current synthetic inference methodology (not CLOSED — PASS); it does not close the real-data track and the Phase 0 gate remains not passed.
 - **Risks:** no affordable provider with sufficient history/licence (RISK-01); sample not representative; scope creep into building ingestion.
 - **Acceptance criteria:**
   - A1. Written data-source decision with licence conclusions on storage, display, redistribution (links to ADR).

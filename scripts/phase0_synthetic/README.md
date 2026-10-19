@@ -15,7 +15,9 @@
 | `phase0/forecast.py` | `HistoryView` look-ahead guard; persistence; walk-forward factor-AR(1); oracle-AR (diagnostic) |
 | `phase0/evaluate.py` | Walk-forward evaluation, MAE/RMSE (decimal and vol points), block bootstrap |
 | `phase0/pipeline.py`, `phase0/run.py` | End-to-end pipeline and CLI that writes run records |
-| `tests/` | `unittest` suites (57 tests) |
+| `phase0/audit.py` | POST HOC audit analyses: A2 (bootstrap coverage), A3 (200-seed study), A2b `sensitivity` (interval-method comparison; implemented, not run at protocol settings), A6 `stopped` (stopped invalid worlds; executed). `sensitivity` and `stopped` refuse existing paths and anything under `experiments/`; `sensitivity` (schema A2b-v1) also refuses reused or reserved seeds, requires `--screening` for the single-method confirmation stage and never selects there. `ledger` prints PA-4 R1–R5 from a stored study record (read-only). See [PHASE0_AUDIT](../../docs/research/PHASE0_AUDIT.md) |
+| `chainpipe/` | Chain → surface → baseline-evaluation engineering path built **on** `phase0/` (which stays unchanged): `schema.py` (canonical columns, provider protocol), `pipeline.py` (row ledger, IV failures, surface), `diagnostics.py` (no-arbitrage flags), `artifact.py` (`chainpipe-surface-1`, content hash), `evaluation.py` (persistence/historical mean, leakage audit), `fixtures.py` + `fixtures/*.synthetic.csv`, `run.py` CLI. Status table: [IMPLEMENTATION_MATRIX](../../docs/engineering/IMPLEMENTATION_MATRIX.md) |
+| `tests/` | `unittest` suites (145 tests: 57 original + 37 audit regression + 18 A2d in `test_a2d.py` + 33 in `test_chainpipe.py`; audit tests in `test_audit_regressions.py`) |
 
 ## Run (from this directory; installs nothing)
 ```text
@@ -23,6 +25,8 @@ python -m unittest discover -s tests -t .
 python -m phase0.run --help
 python -m phase0.run single --world AR --seed 20261013 --days 300
 python -m phase0.run study --first-seed 20261100 --n-seeds 10 --days 300
+python -m chainpipe.run build --input chainpipe/fixtures/chain_series12.synthetic.csv --out ../../scratch/chainpipe/series.json
+python -m chainpipe.run evaluate --artifact ../../scratch/chainpipe/series.json --out ../../scratch/chainpipe/series_eval.json
 ```
 Run records are written to `experiments/phase0_synthetic/` (git-ignored). Each record contains seeds, configuration, Python version, source-file hashes, data/metrics hashes, validation and solver counts, metrics, intervals, hypothesis outcomes and limitations.
 

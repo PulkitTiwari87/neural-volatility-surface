@@ -208,7 +208,7 @@ Phase 0 exits only when **all** of the following exist as linked artifacts (see 
 3. **Availability evidence against the MVD:** counts of available trading days, gaps, and regime coverage (M3–M5) from provider metadata or purchase listing.
 4. **Cost evidence:** a written price or estimator output for the full MVD history; the owner's approval of the spend (none is made here).
 5. **Frozen criteria:** owner-signed MVD thresholds and success criteria (PHASE0_FEASIBILITY_PLAN §7), including pilot-derived *c* and ρ.
-6. **Synthetic feasibility run recorded:** the F0–F8 experiment run on the synthetic sample with S3, S4, S6–S8 results in a run record. **Done 2026-10-12** (owner-approved spike, ADR-0003): see [PHASE0_SYNTHETIC_RESULTS](../research/PHASE0_SYNTHETIC_RESULTS.md) — 57 tests pass; failures and protocol deviations disclosed there. This item covers **synthetic** evidence only and does not satisfy items 2–3.
+6. **Synthetic feasibility run recorded:** the F0–F8 experiment run on the synthetic sample with S3, S4, S6–S8 results in a run record. **Done 2026-10-12** (owner-approved spike, ADR-0003): see [PHASE0_SYNTHETIC_RESULTS](../research/PHASE0_SYNTHETIC_RESULTS.md) — 57 tests passed at first run, 112 after the audit's regression and A2d tests ([PHASE0_AUDIT](../research/PHASE0_AUDIT.md)); failures and protocol deviations disclosed there. This item covers **synthetic** evidence only and does not satisfy items 2–3.
 7. **ADRs:** DEC-001, DEC-002, DEC-003 set to `DECIDED` with the evidence above; DEC-004/005 drafts reflecting AM/PM settlement and the forward-from-parity approach.
 8. **Decision on exposure** (L0 local vs wider) recorded (Q-03).
 
@@ -246,3 +246,37 @@ Terms prohibiting storage or derived-data display · vendor-computed IV only · 
 **Search summaries / G3 (leads only):** Cboe SPX fact sheets and settlement descriptions (https://cdn.cboe.com/resources/spx/spx-fact-sheet.pdf; rule filing https://cdn.cboe.com/resources/regulation/rule_filings/approved/2026/SR-CBOE-2026-044.pdf); WRDS vendor page (https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/optionmetrics/); Databento CBBO start dates (databento.com/blog/opra-improvements-coming-soon); third-party price comparisons for ORATS and Massive.
 
 **Not retrievable:** Databento Terms (https://databento.com/legal renders empty); Cboe price list; OptionMetrics/WRDS licence text; OPRA's own vendor/derived-data policy (not consulted).
+
+## 14. Engineering-feasibility addendum (2026-10-13; public documentation only)
+
+**Scope and method.** Re-checked only what the engineering work needs: can each candidate's *documented* fields populate the spike's canonical chain schema (`chainpipe/schema.py`: `quote_timestamp, underlying_id, underlying_price, expiration, strike, option_type, bid, ask, origin, source`)? Public pages and public crate documentation only; no account, sign-in, download, purchase, contact or credential. Grades as in §1.1. **Nothing here is verified by a sample.** This addendum changes none of §10's rankings or blockers; it adds the mapping and one recommended next decision. Implementation status: [IMPLEMENTATION_MATRIX](../engineering/IMPLEMENTATION_MATRIX.md) (no provider adapter is built).
+
+### 14.1 Newly read this session
+| Fact | Source | Grade |
+|---|---|---|
+| Databento definition record has `strike_price` (i64, **1e-9 fixed-point**), `expiration` (u64, ns since UNIX epoch, null sentinel allowed), `instrument_class` (single char), `underlying` (symbol), `underlying_id`, `security_type`, `exchange`, `currency`, `strike_price_currency`, `settl_currency` | docs.rs `dbn` crate, `InstrumentDefMsg` (page read via fetch tool, paraphrased table) | G2 |
+| That page lists **no exercise-style field**; European vs American and AM vs PM settlement would have to come from elsewhere (symbol root / underlying choice) | same | G2 (absence on one page ≠ absence in the schema → **U**) |
+| Databento consolidated-BBO record carries `levels[1]` with `bid_px`, `ask_px` (i64, 1e-9 fixed-point), `bid_sz`, `ask_sz` (u32), `bid_pb`, `ask_pb` (publisher IDs), plus last-trade `price`/`size`/`side`, `flags`, and `ts_recv` = interval end time | docs.rs `dbn`, `CbboMsg` and `ConsolidatedBidAskPair` | G2 |
+| `databento.com` documentation and terms pages render as an empty shell or truncated text through the fetch tool; **Databento's Terms remain unread** (B3 unchanged) | fetch of `/terms`, `/docs/schemas-and-data-formats/*` | U |
+
+### 14.2 Field mapping to the canonical schema (documented fields only)
+| Canonical field | C1 Cboe EOD quotes | C2 Databento OPRA (CBBO-1m + definition) |
+|---|---|---|
+| `quote_timestamp` | Snapshot-level only (`Quote Date` + 15:45 ET / EOD); **no per-contract timestamp** → staleness untestable (G2) | `ts_recv` interval end, ns UTC (G2); per-contract last-update time not shown on the pages read (U) |
+| `underlying_id` / `underlying_price` | Underlying price for stocks/ETFs included; **SPX index level needs the Cboe Global Indices licence** (G2); "active underlying price" with *Calcs* (G2) | **Not in the options feed** → separate source or parity-inferred only (U); `underlying` symbol in definitions (G2) |
+| `expiration` | Contract field (format U) | `expiration` ns timestamp in the definition record; it is "last eligible trade time", not a settlement-convention label (G2) → AM/PM must be derived, not read |
+| `strike`, `option_type` | Contract fields (G2) | `strike_price` ÷ 1e9; `instrument_class` char decoded to call/put (code table not read, U) |
+| `bid`, `ask` (+ sizes) | bid, ask, bid size, ask size (G2) | `bid_px/ask_px` ÷ 1e9; `bid_sz/ask_sz` (G2) |
+| Open interest (not in canonical schema) | Present in EOD (G2) | Via Statistics schema (U) |
+| Provider IV/Greeks | Only with *Calcs* add-on; **must not be used** (the project computes IV itself) | Not provided in CBBO (G2) |
+| `origin` / `source` | Set to `provider` and a provider/version string by the adapter; raw files kept immutable | same |
+
+**Consequences for the engineering design (PROPOSED):** (1) the canonical schema already fits both candidates' bid/ask fields; (2) both need a **separate underlying/rate source** or a parity-inferred forward, which the pipeline already supports (forward is inferred per expiry; rate is a config constant); (3) neither documents an exercise-style field, so SPX European treatment must remain an explicit configuration assumption; (4) fixed-point price decoding (÷ 1e9) is an adapter concern, not a schema one; (5) Cboe's lack of a per-contract timestamp means the staleness check cannot be exercised on that source.
+
+### 14.3 Unresolved access decisions (all owner-side; none taken)
+B1–B4 and B6–B7 in §10.3 are unchanged. Nothing was purchased, requested or downloaded. No sample exists, so the Phase 0 real-data exit items (§10.4 items 2–4) are **still open**.
+
+### 14.4 Recommended next decision (PROPOSED, owner's)
+Decide **whether the owner will take the one low-cost, reversible access step**: read Databento's Terms in a normal browser session (B3, free) **and** use the Databento cost estimator for a single CBBO-1m snapshot-minute per day for 20 pre-selected dates, *or* send the prepared Cboe questions ([CBOE_LICENSING_QUESTIONS](CBOE_LICENSING_QUESTIONS.md)). Either unblocks a permitted ~20-date sample, which is the evidence the adapter, Q-25 (`observed` definition) and the pricing assumptions all wait on. This is a recommendation, not an authorization; no spend is implied.
+
+**Sources added (2026-10-13):** `https://docs.rs/dbn/latest/dbn/record/struct.InstrumentDefMsg.html` · `…/struct.CbboMsg.html` · `…/struct.ConsolidatedBidAskPair.html` (public crate documentation, G2).

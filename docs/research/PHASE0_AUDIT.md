@@ -2,7 +2,7 @@
 
 > **SYNTHETIC — not market data.** This audit concerns the synthetic feasibility spike only. Nothing here is evidence about real markets. **Phase 0 is NOT complete.**
 
-**Status:** IN_PROGRESS (audit started 2026-10-12 after the spike's first execution; results sections are filled only after the pre-declared analyses run) · **Audited artefacts:** `scripts/phase0_synthetic/`, [PHASE0_SYNTHETIC_RESULTS](PHASE0_SYNTHETIC_RESULTS.md) (**v1**, preserved unchanged), [PHASE0_FEASIBILITY_PLAN §9](PHASE0_FEASIBILITY_PLAN.md) · **Rules:** the v1 pre-registered outcomes stay in the record; every new analysis below is labelled **POST HOC** or **EXPLORATORY**; no threshold or generator parameter is changed to improve an outcome; failed v1 checks stay failed.
+**Status:** IMPLEMENTED for the synthetic spike (all declared analyses A2–A5 executed and re-verified on 2026-10-12; §6 written) — **readiness verdict: BLOCKED, Phase 0 INCOMPLETE** (audit started 2026-10-12 after the spike's first execution) · **Audited artefacts:** `scripts/phase0_synthetic/`, [PHASE0_SYNTHETIC_RESULTS](PHASE0_SYNTHETIC_RESULTS.md) (**v1**, preserved unchanged), [PHASE0_FEASIBILITY_PLAN §9](PHASE0_FEASIBILITY_PLAN.md) · **Rules:** the v1 pre-registered outcomes stay in the record; every new analysis below is labelled **POST HOC** or **EXPLORATORY**; no threshold or generator parameter is changed to improve an outcome; failed v1 checks stay failed.
 
 ## 1. Reproduction of the reported results (executed 2026-10-12, before any code change)
 
@@ -66,6 +66,17 @@ Not changed: the generator, the pre-registered tolerances in `run.TOL`, the fore
 
 Sample-size note for A3: with 200 valid seeds the Wilson 95 % interval for an observed 2.5 % rate is about [1.1 %, 5.7 %], enough to distinguish a size near the nominal 2.5 % from one above ~8 %, and far tighter than the 9–10 seeds of v1 (where 0/9 is compatible with any true rate up to ≈ 28 %).
 
+### 4a. Further analyses PROPOSED after the closure run (2026-10-12; **not run**, awaiting owner approval; full protocol in [decision.md](../../decision.md) PA-1 and PA-4)
+
+| ID | Analysis | Purpose | Status |
+|---|---|---|---|
+| **A2b** | Two-stage interval-method study on zero-mean series: screening of six methods (block bootstrap b = 5, 10, 20; HAC lag 4, 9, 19) on the A2 design plus ρ = −0.2, a skewed case with effective lag-1 0.30, and n = 120, 2000 replications, tolerance gate and a calibration-first selection rule; then confirmation of the single selected method on fresh seeds with 5000 replications and one-sided 95 % bounds (size UCB ≤ 3.5 %, coverage LCB ≥ 93.5 %). Amended 2026-10-12 after a design audit (decision.md PA-1) | PA-1: coverage, boundary size, efficiency, robustness (power in A3b) | PROPOSED, unsigned; **implemented** (`audit.py sensitivity`), plumbing-checked only, **not run** at protocol settings |
+| **A2c** | Pipeline-realistic zero-mean surrogates built from each A3 world's own loss-difference series (AR(1) sieve with re-centred residuals, 100 replicates per world); selected method only; world-level uncertainty; shows the interval method behaves on series with the pipeline's marginal and lag-1 dependence, **not** the pipeline's own size | PA-1: robustness of the chosen method | PROPOSED; specified in decision.md, not implemented, not run |
+| **A3b** | Re-evaluation of the 400 A3 worlds under the selected method; AR power gate ≥ 95 %; RW rates reported under the PA-4 ledger (not a size) | PA-1: power and consistency | PROPOSED; needs per-origin d series stored |
+| **A6** | Ten invalid A3 RW worlds run unchanged up to their first breach day (stopped worlds) | PA-4: outcome of the otherwise unobserved worlds; descriptive only | **EXECUTED 2026-10-12** (owner-authorised, exploratory); results in §5, protocol still PROPOSED |
+
+Diagnostics D1 (why the 10 worlds are invalid) and D2 (outcome vs proximity to the barrier among the 190 valid worlds) were computed on existing records in a scratch script and are reported in decision.md PA-4; they select nothing.
+
 ## 5. Results
 
 *(the declarations above are not edited afterwards)*
@@ -112,8 +123,93 @@ Reading (bounded by the evidence; all synthetic):
 - **Dependence:** loss differences are only weakly (RW) or negatively (AR) autocorrelated, so the A2 under-coverage at ρ ≥ 0.3 is less relevant here; the iid-case size distortion (3.4 % vs 2.5 %) still applies.
 - **v2 node fix:** no run had a snapped cell and none failed H-S1 — consistent with the F1 diagnosis.
 
+**A6 (stopped invalid RW worlds, EXPLORATORY, POST HOC) — DONE 2026-10-12** (`python -m phase0.audit stopped --out ../../scratch/phase0_audit/A6_stopped_worlds`, 22 s; outputs git-ignored under `scratch/phase0_audit/`, ledger SHA-256 `2831fae5a0af0dcedad1cb09c4b2288d7432c4552f34fee0232f5e0229e9b3a1`). Stopping rule: `n_days` = largest value for which the generator succeeds (first day the plausibility guard fires), found by bisection; the 10 invalid A3 RW seeds stop at days 207, 230, 241, 212, 268, 128, 195, 205, 263, 206. Prefix check (truncated world vs first `n_days` days of the full world, factors, spots and all daily quote data): 10/10 equal. Ledger: attempted 10, completed 10, failed 0; improvement detected 0/10 (Wilson 95 % [0, 27.8 %]); persistence significantly better 1/10; origins 68–208; MSE ratio mean 1.018 (0.992–1.050). **Not pooled** with the 3/190 full-world result and not a false-positive rate: it is a different, shorter-sample estimand, n = 10 cannot exclude a detection rate of 0.20, and the detection rule is the PA-1 rule under review. Full text and limitations: [decision.md](../../decision.md) PA-4. Test suite after the A2b/A6 code and the later A2b amendments and the PA-4 ledger and the frozen A2b-v1 protocol: 94 tests, OK; with the 18 A2d tests 112 (2026-10-13).
+
 **Still not claimed:** anything about real data, a neural model, or the nominal size of the procedure under realistic (non-synthetic) dependence.
 
-## 6. Readiness audit of the repository
+**Decisions arising from A2–A5** (issue, evidence, alternatives, rationale, consequences, status): [decision.md](../../decision.md) PA-1 (bootstrap calibration, OPEN), PA-2 (H-S6 tolerance, PROPOSED), PA-3 (recovery vs matching tolerance, PROPOSED / OPEN for real data), PA-4 (invalid-world accounting, OPEN), PA-5 (synthetic vs real evidence, policy). None changes a v1 outcome; none is signed.
 
-*(pending)*
+## 6. Readiness assessment (closure run, 2026-10-12)
+
+### 6.1 Re-verification of the reported facts (executed in the closure run, not copied from earlier text)
+
+| Claim | Check performed | Result |
+|---|---|---|
+| Branch / tree state | `git status`, `git log` at start | `main`, HEAD `3d520f5` ("phase 0"), working tree clean, no unexpected untracked files |
+| Original suite had 57 tests; expanded suite has 74 | `python -m unittest discover -s tests -t .` from `scripts/phase0_synthetic/`; `tests.test_audit_regressions` alone | **Ran 74 tests, OK** (9.2 s); the regression module alone: 17 tests, OK → 57 + 17 = 74 (the 57 were not re-run in isolation; derived by subtraction) |
+| Seven v1 records archived | listed `experiments/phase0_synthetic/archive_v1/` | 7 files present; SHA-256 in §6.5 |
+| A4: `--tol-k 1e-6` reproduces v1 | re-ran the 7 commands into a scratch folder (noise runs with their own 5e-4), compared every key of each archived record against the new record, ignoring only wall-time, `code_sha256`, `metrics_sha256` | **0 differences in 7/7 records** (study included). `metrics_sha256` differs by construction: it hashes the comparison and diagnostics blocks, which gained additive keys |
+| A5: only 2 H-S1 and 1 H-S4 outcomes change, detections unchanged | compared archived v1 vs stored v2 records, run by run | exactly 3 changes: RW 20261104 H-S1 F→T and H-S4 F→T; AR 20261106 H-S1 F→T; no detection outcome changed; study summary 0 false positives, 10/10 detections, 1 invalid world (both versions) |
+| A2: coverage 93.3 / 90.8 / 85.8 % (+ skewed 91.3 %) | re-ran `run_coverage` into a scratch path (206 s originally) | result **identical** to the stored record (excluding wall time); the §5 table matches it |
+| A3: 200 seeds per world, 10 invalid RW worlds, 3 false improvements among 190 valid | re-ran `run_study(20262000, 200, 300)` into a scratch path (425 s) | **identical** to the stored record (excluding wall time); all §5 A3 table entries (detections, invalid counts, H-S pass counts, MSE-ratio moments, autocorrelations, analytic vs empirical SD) checked against the stored summary: 0 mismatches |
+| Scientific audit incomplete | §6 was `(pending)` | now written; the audit of the synthetic spike is complete, but see §6.6 for what remains open |
+
+**Discrepancies found:** none in the reported numbers. Documentation discrepancies fixed in this run: stale "57 tests" in README, both scripts READMEs, ASSESSMENT item 6, MILESTONES, IMPLEMENTATION_PLAN, the decision.md DEC-015 note, plan §9.4a and results §2 (historical v1 counts kept, annotated "74 after the audit"); the README claim "independently reproduced" was overstated (the same code was re-run; it is **not** an independent re-implementation) and was reworded; the docs index lacked this audit and NEXT_STEPS (added); Q-28 still quoted the v1 "SD ≈ 10 %" guess (annotated with the A3 measurement).
+
+**Limit of this re-verification:** all re-runs use the same code, the same Python 3.12.6 on one Windows machine, and the same seeds. They show the stored numbers are reproducible, not that the generator, the forecaster or the statistics are scientifically right (see §2).
+
+### 6.2 Scientific readiness of the synthetic spike
+
+| Question | Verdict | Evidence |
+|---|---|---|
+| Are the computations numerically correct? | Supported | §2 "looked at and found correct"; 74 tests; hand-checked values and invariants |
+| Can the pipeline recover known truths? | Supported on synthetic data | H-S1 / H-S1b 390/390 in A3 (v2); 0 snapped cells (see the PA-3 limit) |
+| Does it detect a known predictable component? | Supported, well-specified forecaster only | AR: 200/200, MSE ratio 0.760 vs analytic 0.75 |
+| Does it avoid false improvement claims under a random walk? | Supported only as a range | 1.6 % over valid worlds; up to 6.5 % counting the 10 invalid worlds as detections (PA-4, OPEN) |
+| Is "improvement detected" a calibrated test? | **No** | A2 under-coverage; `lo > 0` rate 3.4–7.1 % vs 2.5 % nominal (PA-1, CLOSED — NO-GO) |
+| Is the H-S6 criterion justified? | Proposed replacement supported | analytic SD matches empirical within 2 % (PA-2, PROPOSED; power not yet shown) |
+| Is strict H-S2 reliable in the full configuration? | No | fails in 12 of 190 RW and 1 of 200 AR runs (thin 30-day slices with < 3 put–call pairs); the exact identity H-S2a holds 390/390 (Q-26 open) |
+| Is any statement about real markets, real data quality, or a neural model supported? | **No** | nothing in the spike touches them (PA-5) |
+
+### 6.3 Readiness against the Phase 0 exit evidence ([DATA_SOURCE_ASSESSMENT §10.4](../data/DATA_SOURCE_ASSESSMENT.md))
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Written licence evidence (B1–B4) | NOT MET — Cboe questions drafted, not sent |
+| 2 | Real sample, ≥ 20 pre-selected dates | NOT MET — none obtained |
+| 3 | Availability vs MVD | NOT MET |
+| 4 | Cost evidence and spend approval | NOT MET |
+| 5 | Frozen, owner-signed thresholds | NOT MET — PA-2…PA-4 unsigned; PA-1 CLOSED — NO-GO (2026-10-13), PA-4 OPEN |
+| 6 | Synthetic feasibility run recorded | MET (synthetic evidence only; does not satisfy 2–3) |
+| 7 | DEC-001/002/003 `DECIDED` with ADRs | NOT MET — 0 of 15 decided |
+| 8 | Exposure decision (Q-03) | NOT MET |
+
+### 6.4 Repository hygiene (closure run, after edits)
+
+| Check | Result |
+|---|---|
+| `git diff --check` | no whitespace errors (only LF→CRLF advisory warnings from `core.autocrlf=true`; working copies are LF like the untouched files) |
+| Tracked generated/data files | none: no `*.json/csv/parquet/pkl/npy/db/log/env/pem/key/zip/pt/h5` tracked; tracked under `experiments/`, `artifacts/`, `data/`: READMEs and `.gitkeep` only |
+| Secret patterns in tracked files (key/token/password assignments, AWS key ids, private-key headers, `sk-` tokens) | no matches |
+| Relative links in tracked `*.md` | 0 broken (file existence only; heading anchors not checked) |
+| Ignore rules | `experiments/**` and `.ruff_cache/` are ignored as intended; ignored-but-present: `experiments/phase0_synthetic/`, two `.ruff_cache/` folders |
+| Scope | only documentation was edited in this closure run; no code, test, dependency, config or experiment-record file changed; no Git state changed |
+
+**Hygiene finding (not fixed; needs the owner):** the evidence behind §4–§5 (`archive_v1/`, `v2/`, `audit_A2_*.json`, `audit_A3_*.json`) lives in a **git-ignored** folder, so it is not versioned and is lost if the folder is deleted. The v1 records stay reproducible from seeds and code (A4), but their "unchanged" status is checkable only through the hashes below. Options for the owner: keep as is, back the folder up outside Git, or deliberately track selected synthetic records (all are labelled synthetic). Not done here because Git operations and ignore-policy changes are the owner's.
+
+### 6.5 Integrity witness for the archived v1 records (SHA-256, computed 2026-10-12 during the closure run)
+
+These show the files were identical at this date; they cannot prove they were unchanged before it (that rests on §1 and the A4 comparison).
+
+| File in `experiments/phase0_synthetic/archive_v1/` | SHA-256 | Bytes |
+|---|---|---|
+| `single_AR_20261013.json` | `8b9665b4b4e728a4397b0fa4924ee23f237fbe0abdde2c0a1acdcab1471e3922` | 11902 |
+| `single_AR_20261013_fast150.json` | `ae1561ccea23b1731eee1a481db0e115bfdb6c14241fc181f7287f8c744fff86` | 11842 |
+| `single_AR_20261013_noise.json` | `53c6ebd6b633d5a56b5550533afb371dd3d301ee7208fd5ad948f6d1f76455e9` | 11915 |
+| `single_RW_20261012.json` | `d8e2c132d6af32dddb4dfe7d1c81225fe41bfdb97cdf19f197918c1d9bf0c1e3` | 11861 |
+| `single_RW_20261012_fast150.json` | `21f488458ddeb786bb8c5cc24cbdeb2646037805ee990adb92f04b6e3ef83b7c` | 11802 |
+| `single_RW_20261012_noise.json` | `93f2daf10a645fa41bf7aef21c2635f483050195a1a44c2ac7688609556beca3` | 11851 |
+| `study_20261100_10.json` | `ed748f1813668bd0eee2dbb6cfa114cbf6faf34f62063aca63613fde26513022` | 248662 |
+
+### 6.6 Phase-gate decision
+
+> **Update 2026-10-13:** the later evidence (A2b-v1 Stage 1 `NO_METHOD_ADMISSIBLE`, A2d diagnostic and its disclosed correction) is consolidated in [PHASE0_CLOSURE_RECORD](PHASE0_CLOSURE_RECORD.md), which records the owner's acceptance (2026-10-13) of CLOSED — NO-GO for the current inference methodology (not CLOSED — PASS). The gate decision below is unchanged: Phase 0 is **not passed** and real-data feasibility is not established.
+
+**PHASE 0: INCOMPLETE — gate BLOCKED.** The audit of the synthetic spike is finished (all declared analyses executed and re-verified), but Phase 0 requires real-data and licence evidence that does not exist.
+
+Blockers (exact):
+1. §6.3 items 1–5, 7 and 8 unmet: no written licence reply, no permitted real sample, no availability or cost evidence, no frozen thresholds, no DEC-001/002/003 ADRs, no exposure decision. These need the owner (contacting providers, terms, spend) and are out of scope for an agent.
+2. Protocol amendments unsigned: PA-1 (CLOSED — NO-GO 2026-10-13: the A2b gate was run and not met; no method adopted) and PA-4 (OPEN: needs a reporting-rule sign-off or the invalid-world diagnostic run); PA-2 and PA-3 are PROPOSED and need sign-off (PA-2 also needs a power check; PA-3 stays open for real chains, Q-25).
+3. Evidence folder not versioned (§6.4), the owner's call.
+
+Next smallest actionable step: the owner reviews [decision.md](../../decision.md) PA-1…PA-4 and either signs the A2b selection rule (PA-1) or records the reporting rule (PA-4); in parallel the owner decides whether to send the drafted Cboe questions ([NEXT_STEPS](NEXT_STEPS.md) workstreams 2–3).

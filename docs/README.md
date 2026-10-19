@@ -30,11 +30,20 @@
 | Data source selection (evidence, licence findings, blockers) | [data/DATA_SOURCE_ASSESSMENT](data/DATA_SOURCE_ASSESSMENT.md) | DEC-001/002/003 |
 | Minimum viable dataset, Phase 0 success criteria, synthetic sample, feasibility experiment | [research/PHASE0_FEASIBILITY_PLAN](research/PHASE0_FEASIBILITY_PLAN.md) | EVALUATION_PROTOCOL §8 |
 | Phase 0 synthetic experiment results (tests, scenarios, study, deviations) | [research/PHASE0_SYNTHETIC_RESULTS](research/PHASE0_SYNTHETIC_RESULTS.md) | `scripts/phase0_synthetic/`, ADR-0003 |
+| Phase 0 scientific audit (reproduction, findings F1–F12, post-hoc analyses A2–A5, readiness) | [research/PHASE0_AUDIT](research/PHASE0_AUDIT.md) | decision.md PA-1…PA-5 |
+| Phase 0 next steps to a real-data go/no-go | [research/NEXT_STEPS](research/NEXT_STEPS.md) | PHASE0_AUDIT, DATA_SOURCE_ASSESSMENT |
+| A2d diagnostic: frozen design and results (synthetic, diagnostic only) | [research/PHASE0_A2D_DIAGNOSTIC_DESIGN](research/PHASE0_A2D_DIAGNOSTIC_DESIGN.md), [research/PHASE0_A2D_RESULTS](research/PHASE0_A2D_RESULTS.md) | PHASE0_A2B_SCREENING_DIAGNOSTIC §8 |
+| A2b Stage 1 screening diagnostic and next-protocol proposal (read-only) | [research/PHASE0_A2B_SCREENING_DIAGNOSTIC](research/PHASE0_A2B_SCREENING_DIAGNOSTIC.md) | decision.md PA-1 |
+| Phase 0 owner decision package (PA-1, PA-4, A2b/A2c audit, real-data checklist, approvals) | [research/PHASE0_OWNER_DECISION_PACKAGE](research/PHASE0_OWNER_DECISION_PACKAGE.md) | decision.md PA-1…PA-5 |
 | Draft questions to Cboe (not sent) | [data/CBOE_LICENSING_QUESTIONS](data/CBOE_LICENSING_QUESTIONS.md) | DATA_SOURCE_ASSESSMENT §10.3 |
 | Schemas | [data/DATA_DICTIONARY](data/DATA_DICTIONARY.md) | — |
 | Licensing & governance | [data/DATA_GOVERNANCE](data/DATA_GOVERNANCE.md) | — |
 | Quote filters | [data/QUOTE_QUALITY_POLICY](data/QUOTE_QUALITY_POLICY.md) | — |
 | UI behaviour & acceptance | [design.md](../design.md) | [design/*](design/) |
+| Phase 0 closure (exit-criteria status, owner-accepted CLOSED — NO-GO for the synthetic inference methodology) | [research/PHASE0_CLOSURE_RECORD](research/PHASE0_CLOSURE_RECORD.md) | [research/PHASE0_AUDIT](research/PHASE0_AUDIT.md) |
+| Hosted dataset assessment for experiment E-1 (candidates, licence caveat, access method) | [data/HOSTED_DATASET_ASSESSMENT](data/HOSTED_DATASET_ASSESSMENT.md) | [data/DATA_SOURCE_ASSESSMENT](data/DATA_SOURCE_ASSESSMENT.md) |
+| Experiments E-1 and E-2 results (hosted SPY data, GPU neural vs baselines; nearest- vs fixed-expiry label) | [research/E1_RESULTS](research/E1_RESULTS.md), [research/E2_FIXED_EXPIRY_RESULTS](research/E2_FIXED_EXPIRY_RESULTS.md) | [data/HOSTED_DATASET_ASSESSMENT](data/HOSTED_DATASET_ASSESSMENT.md) |
+| Implementation status of the chain→surface→baseline path (spike) | [engineering/IMPLEMENTATION_MATRIX](engineering/IMPLEMENTATION_MATRIX.md) | `scripts/phase0_synthetic/chainpipe/` |
 | Coding standards | [engineering/CODING_STANDARDS](engineering/CODING_STANDARDS.md) | — |
 | Security | [engineering/SECURITY](engineering/SECURITY.md) | guardrails GR-SEC |
 | Observability / performance | [engineering/OBSERVABILITY](engineering/OBSERVABILITY.md), [engineering/PERFORMANCE](engineering/PERFORMANCE.md) | — |

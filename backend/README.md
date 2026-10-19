@@ -1,6 +1,6 @@
 # backend/
 
-**Status:** PLANNED — directory placeholders only; **no code, manifest, or lockfile** (toolchain undecided: DEC-015).
+**Status:** `IN_PROGRESS` — one research package, `src/volatility_lab`, implemented for **experiment E-1** ([decision.md](../decision.md), owner-directed 2026-10-13): ingestion adapter, quote validation, vectorised pricing/IV, surface grid, features, baselines, GPU-only neural models, walk-forward evaluation and a runner. A local, read-only, loopback-only stdlib API (`api/`, contract in [API_CONTRACTS](../docs/architecture/API_CONTRACTS.md) §8) also exists; **no frontend here (the viewer is owned by the dashboard session), no manifest or lockfile** (toolchain undecided: DEC-015; the package needs only NumPy, pandas, SciPy, PyArrow and, for neural work, PyTorch on a CUDA GPU). Tests: `PYTHONPATH=src python -m unittest discover -s tests -t .` from `backend/` runs `tests/unit` and `tests/scientific` (CPU only, synthetic data only; the single GPU test skips unless a CUDA device exists; the full run takes several minutes). The Colab/Kaggle notebook is generated from this source by `scripts/build_colab_notebook.py`. Directories below not mentioned here remain placeholders.
 
 Layout: `src/volatility_lab/{config,domain,ingestion,validation,pricing,surfaces,features,datasets,models,evaluation,experiments,storage,api,observability}` and `tests/{unit,integration,scientific,fixtures}`.
 
