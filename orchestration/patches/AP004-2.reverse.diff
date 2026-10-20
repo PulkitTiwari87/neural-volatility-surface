@@ -1,0 +1,25 @@
+--- backend/src/volatility_lab/storage/raw_store.py	2026-10-21 00:12:25.359582500 +0530
++++ orchestration/patches/pre/storage_raw_store.py	2026-10-21 00:10:15.830316300 +0530
+@@ -64,12 +64,7 @@
+                 raise OverwriteError(f"stored object {dest.name} no longer matches its hash")
+         else:
+             dest.parent.mkdir(parents=True, exist_ok=True)
+-            part = dest.with_name(dest.name + ".part")
+-            shutil.copyfile(path, part)
+-            if sha256_file(part) != digest:                      # the source changed between hashing and copying
+-                part.unlink()
+-                raise OverwriteError(f"{path.name} changed while it was being stored")
+-            part.replace(dest)                                   # atomic: a half-written object never has a hash name
++            shutil.copyfile(path, dest)
+         return {"name": path.name, "sha256": digest, "bytes": dest.stat().st_size, "stored": str(dest)}
+ 
+     def verify(self) -> list:
+@@ -134,7 +129,7 @@
+             raise OverwriteError(f"dataset {version[:12]} has a missing or altered quality report")
+         _write_meta(out, origin)
+         return {**manifest, "reused": True}
+-    out.mkdir(parents=True, exist_ok=True)   # manifest.json is written last: a directory without it is an interrupted ingest
++    out.mkdir(parents=True)
+     np.savez_compressed(out / "panel.npz", **panel)
+     (out / "quality_report.json").write_text(report_text)
+     mf.write_text(text)

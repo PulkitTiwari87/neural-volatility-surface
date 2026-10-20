@@ -17,8 +17,15 @@ def perturb_after(p: Prepared, row: int, cfg: Config, seed: int = 0) -> Prepared
     iv[row + 1:] = rng.uniform(0.05, 0.9, iv[row + 1:].shape)
     spot[row + 1:] = rng.uniform(100, 900, spot[row + 1:].shape)
     st[row + 1:] = 3
+    changes = {}
+    if p.calendar is not None:
+        # the calendar block (days-to-expiry per tenor, weekday) is also an input: a feature that read a LATER row of it
+        # must be caught, so the rows after the origin are scrambled too
+        cal = p.calendar.copy()
+        cal[row + 1:] = rng.uniform(0.0, 400.0, cal[row + 1:].shape)
+        changes["calendar"] = cal
     return dataclasses.replace(p, iv=iv, spot=spot, status=st, avail=st > 0,
-                               rv=realized_vol(spot, cfg.features.rv_windows))
+                               rv=realized_vol(spot, cfg.features.rv_windows), **changes)
 
 
 def feature_invariance_check(p: Prepared, cfg: Config, row: int | None = None) -> dict:

@@ -25,6 +25,7 @@ from volatility_lab.surfaces.grid import build_surface_panel, status_counts
 from volatility_lab.validation.quotes import build_otm_quotes
 
 SCHEMA = "dataset-1"
+ORIGINS = ("synthetic", "real")
 
 
 class OverwriteError(RuntimeError):
@@ -63,7 +64,12 @@ class RawStore:
                 raise OverwriteError(f"stored object {dest.name} no longer matches its hash")
         else:
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(path, dest)
+            part = dest.with_name(dest.name + ".part")
+            shutil.copyfile(path, part)
+            if sha256_file(part) != digest:                      # the source changed between hashing and copying
+                part.unlink()
+                raise OverwriteError(f"{path.name} changed while it was being stored")
+            part.replace(dest)                                   # atomic: a half-written object never has a hash name
         return {"name": path.name, "sha256": digest, "bytes": dest.stat().st_size, "stored": str(dest)}
 
     def verify(self) -> list:
@@ -81,11 +87,23 @@ def dataset_version_id(input_hashes: Sequence[str], config_sha256: str) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
-def ingest(root, paths: Sequence, cfg: Config, *, max_rows=None) -> dict:
+def ingest(root, paths: Sequence, cfg: Config, *, max_rows=None, origin: str | None = None) -> dict:
     """Raw files -> stored raw objects -> quotes -> surface panel -> versioned dataset. Returns the manifest.
 
     ``manifest["reused"]`` is True when the identical dataset version already existed (nothing rewritten).
+
+    ``origin`` ("synthetic" | "real", GR-DATA-04) is optional. When given it is recorded in the manifest and in a
+    ``meta.json`` (written only if absent) next to ``panel.npz``; it is *not* part of ``version_id``. When ``None``
+    the manifest is exactly what it was before this option existed. Input files named ``*.synthetic.*`` are refused
+    as ``"real"``. Re-ingesting the same inputs with a different origin (or with/without one) is refused by the
+    manifest overwrite check: a label is never silently changed.
     """
+    if origin is not None and origin not in ORIGINS:
+        raise ValueError(f"origin must be one of {ORIGINS} or None, got {origin!r}")
+    if origin == "real":
+        bad = [Path(p).name for p in paths if ".synthetic." in Path(p).name]
+        if bad:
+            raise ValueError(f"synthetic file(s) can never be stored as real data: {bad}")
     store = RawStore(root)
     inputs = [store.put(p) for p in sorted(map(Path, paths), key=lambda p: p.name)]
     version = dataset_version_id([i["sha256"] for i in inputs], cfg.sha256())
@@ -99,14 +117,61 @@ def ingest(root, paths: Sequence, cfg: Config, *, max_rows=None) -> dict:
         "ledger_prefilter": ledger1.to_dict(), "ledger_quotes": ledger2.to_dict(), "ledgers_conserved": True,
         "quote_diagnostics": diag, "surface_status_counts": status_counts(panel), "panel_sha256": panel_sha256(panel),
     }
+    if origin is not None:
+        manifest["origin"] = origin
+    # Phase 1 A2: per-snapshot reconciliation (rows_in = kept + rejected on every quote date), kept next to the manifest
+    report_text = json.dumps({"schema": "quality-report-1", "prefilter_by_snapshot": ledger1.by_date_report(),
+                              "quotes_by_snapshot": ledger2.by_date_report()}, indent=1, sort_keys=True)
+    manifest["quality_report_sha256"] = hashlib.sha256(report_text.encode()).hexdigest()
     text = json.dumps(manifest, indent=1, sort_keys=True, default=str)
     out = Path(root) / "datasets" / version
     mf = out / "manifest.json"
     if mf.exists():
         if mf.read_text() != text:
             raise OverwriteError(f"dataset {version[:12]} exists with different content; a correction needs a new version")
+        qr = out / "quality_report.json"
+        if not qr.is_file() or qr.read_text() != report_text:
+            raise OverwriteError(f"dataset {version[:12]} has a missing or altered quality report")
+        _write_meta(out, origin)
         return {**manifest, "reused": True}
-    out.mkdir(parents=True)
+    out.mkdir(parents=True, exist_ok=True)   # manifest.json is written last: a directory without it is an interrupted ingest
     np.savez_compressed(out / "panel.npz", **panel)
+    (out / "quality_report.json").write_text(report_text)
     mf.write_text(text)
+    _write_meta(out, origin)
     return {**manifest, "reused": False}
+
+
+def verify_dataset(root, version_id: str) -> list:
+    """Re-check a stored dataset against its manifest (panel hash, quality-report hash, per-snapshot conservation).
+
+    Returns the problems found (empty = intact). Read-only."""
+    out = Path(root) / "datasets" / version_id
+    problems = []
+    try:
+        manifest = json.loads((out / "manifest.json").read_text())
+        with np.load(out / "panel.npz") as z:
+            panel = {k: z[k] for k in z.files}
+        report_text = (out / "quality_report.json").read_text()
+    except (OSError, ValueError) as e:
+        return [f"unreadable dataset file: {e}"]
+    if panel_sha256(panel) != manifest.get("panel_sha256"):
+        problems.append("panel hash mismatch")
+    if hashlib.sha256(report_text.encode()).hexdigest() != manifest.get("quality_report_sha256"):
+        problems.append("quality report hash mismatch")
+    try:
+        report = json.loads(report_text)
+        for stage in ("prefilter_by_snapshot", "quotes_by_snapshot"):
+            for day, c in report[stage].items():
+                if c["rows_in"] != c["kept"] + sum(c["rejects"].values()):
+                    problems.append(f"{stage} {day}: rows_in != kept + rejected")
+    except (ValueError, KeyError, TypeError, AttributeError):
+        problems.append("quality report is malformed")
+    return problems
+
+
+def _write_meta(out: Path, origin: str | None) -> None:
+    """``meta.json`` is the run label read by the API; an existing one is never overwritten."""
+    meta = out / "meta.json"
+    if origin is not None and not meta.exists():
+        meta.write_text(json.dumps({"origin": origin, "description": f"ingested with origin={origin}"}, indent=1))

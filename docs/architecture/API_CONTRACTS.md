@@ -64,9 +64,9 @@ Framework (DEC-007); auth mechanism (DEC-013); whether raw/validated quotes may 
 ## 7. Acceptance
 Contract tests generated from the schema; UI fixtures derived from the same schema; UA-01 verifies UI values equal API values.
 
-## 8. Implemented contract: local research API v0 (status `IMPLEMENTED`, local only; tests `backend/tests/unit/test_api.py`)
+## 8. Implemented contract: local research API v0 (status `IMPLEMENTED`, local only; tests `backend/tests/unit/test_api.py`, `test_api_edge_inputs.py` (HEAD/OPTIONS, Host guard, non-finite cells; verified in Colab 2026-10-21))
 
-**Transport.** Standard-library HTTP, `GET` only (other methods → 405 `{"error": "read-only API"}`), bind refused unless loopback, no authentication (Phase 6), `Cache-Control: no-store`, CSP `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'`. JSON is strict (`NaN` is never emitted; missing numbers are `null`). Names (`run_id`, model, table) must match `^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$`; surface index is 1–7 digits. The API reads files only: it never computes IV, trains or forecasts.
+**Transport.** Standard-library HTTP, `GET` only (every other method, **including `HEAD` and `OPTIONS`**, → 405 `{"error": "read-only API"}` with `Allow: GET`), bind refused unless loopback, a `Host` header must be absent or name a loopback host (`127.0.0.1`, `localhost`, `[::1]`; optional port; case-insensitive), otherwise 400 `{"error": "unexpected Host header"}` (DNS-rebinding guard; an alias such as `127.0.0.2` or the machine name is refused), no authentication (Phase 6), `Cache-Control: no-store`, CSP `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'`. JSON is strict (`NaN` is never emitted; missing numbers are `null`). Names (`run_id`, model, table) must match `^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$`; surface index is 1–7 digits. The API reads files only: it never computes IV, trains or forecasts.
 
 **Runs root layout** (one directory per run): `panel.npz` (required), `meta.json`, `manifest.json`, `tables/*.csv`, `forecasts/<model>.npz` (all optional). A run without a valid `meta.json` is `origin: "unlabelled"` and must be shown as such.
 
@@ -77,7 +77,7 @@ Contract tests generated from the schema; UI fixtures derived from the same sche
 | `GET /api/runs/{id}` | `{id, origin, description, dates[ISO date], tenor_days[], k_nodes[], status_labels{"0".."3"}, status_counts{label:int}, tables[], forecasts[], lineage}` ; `lineage` is `null` without a manifest, else `{version_id, config_sha256, inputs, ledgers_conserved, ledger_prefilter, ledger_quotes, panel_sha256_recorded, panel_sha256_actual, panel_hash_matches}` |
 | `GET /api/runs/{id}/surface/{index}` | `{run, origin, description, index, date, spot, n_quotes, tenor_days, k_nodes, iv[T][K], status[T][K], iv_units}` |
 | `GET /api/runs/{id}/forecasts/{model}/{index}` | `{run, origin, description, model, index, target_date, origin_date, horizon_panel_steps, tenor_days, k_nodes, actual[T][K], status[T][K], forecast[T][K], difference[T][K], n_difference_cells, n_observed_cells, mae_observed_vol_points, iv_units}` |
-| `GET /api/runs/{id}/tables/{name}` | `{run, table, columns[], truncated, rows[][]}` (first 5,000 rows; numeric cells parsed, empty cells stay text) |
+| `GET /api/runs/{id}/tables/{name}` | `{run, table, columns[], truncated, rows[][]}` (first 5,000 rows; numeric cells parsed, empty cells stay text; **non-finite numeric cells — `nan`, `inf`, `-inf`, `Infinity`, overflow such as `1e999` — are `null`**, never a 500 and never a non-JSON token) |
 
 **Semantics the UI must honour.**
 - **Axes.** `tenor_days` = constant-maturity tenors in calendar days (E-1: 7, 14, 30, 60, 91, 182). `k_nodes` = forward log-moneyness `ln(K/F)`, F from put–call parity per (date, expiry) (E-1: −0.20 … +0.08). Arrays are indexed `[tenor][k]`. `index` is the position in `dates`, **not** a calendar date; dates are trading days (end-of-day snapshots), ISO `YYYY-MM-DD`, no time zone because the data are daily.

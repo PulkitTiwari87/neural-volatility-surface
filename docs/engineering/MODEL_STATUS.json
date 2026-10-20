@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "in_progress",
-  "updated_at": "2026-10-16T00:00:00Z",
+  "updated_at": "2026-10-20T00:00:00Z",
   "confirmed_by": null,
   "written_by": "core research and engineering session (never sets status to complete; the owner confirms and instructs the dashboard session in chat)",
   "model_interface": {
@@ -14,13 +14,17 @@
   "completed_validation": [
     {"name": "backend unit + scientific tests", "command": "cd backend && PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "110 tests OK, 1 skipped (CUDA), plus tests.unit.test_architecture_imports 4 tests OK (added after the run started)", "date": "2026-10-16"},
     {"name": "phase 0 spike tests (stdlib)", "command": "cd scripts/phase0_synthetic && python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "145 tests OK", "date": "2026-10-16"},
-    {"name": "foundation audit", "command": "python scripts/foundation_audit.py", "result": "exit 0; 712 links, 0 broken; 0 undefined IDs; 0 secret hits; 0 tracked data files", "date": "2026-10-16"}
+    {"name": "foundation audit", "command": "python scripts/foundation_audit.py", "result": "exit 0; 712 links, 0 broken; 0 undefined IDs; 0 secret hits; 0 tracked data files", "date": "2026-10-16"},
+    {"name": "backend unit + scientific tests (2026-10-20 re-run, Windows, Python 3.12.6, CPU torch)", "command": "cd backend && PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "179 tests OK, 1 skipped (CUDA) after the agent additions (158 before them; baseline before the day's changes was 131 OK, 1 skipped)", "date": "2026-10-20"},
+    {"name": "backend tests, audit pass 2026-10-20 (local stack and clean latest-dependency venv)", "command": "cd backend && PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "252 tests OK, 1 skipped (CUDA) on numpy 1.26.2/pandas 2.1.3 and on numpy 2.5.4/pandas 3.0.6/scipy 1.18.1/pyarrow 26.0.0; not a CI run", "date": "2026-10-20"},
+    {"name": "phase 0 spike tests (2026-10-20 re-run)", "command": "cd scripts/phase0_synthetic && python -W error::ResourceWarning -m unittest discover -s tests -t .", "result": "145 tests OK", "date": "2026-10-20"},
+    {"name": "foundation audit incl. status-claim checks (2026-10-20)", "command": "python scripts/foundation_audit.py", "result": "exit 0; 732 links, 0 broken; 0 status-claim problems; decided = DEC-006, interim = DEC-001/002/003", "date": "2026-10-20"}
   ],
-  "results_status": "descriptive backtests only (hosted SPY end-of-day data, unverified upstream licence); no neural model beat persistence; no significance, calibration or trading claim (KNOWN_LIMITATIONS L-22)",
+  "results_status": "descriptive backtests only (hosted SPY end-of-day data, unverified upstream licence, one run each, figures transcribed from notebook outputs); the GRU ensemble beats persistence under the fixed-expiry label only (H5/H6; formal verdict holds_under_fixed_expiry_label_only, negative under the nearest-expiry label, no interpretable edge over the PCA-ridge baseline); not a general improvement; no significance, calibration or trading claim (KNOWN_LIMITATIONS L-22, L-29, L-30)",
   "known_blockers": [
     "Phase 0 real-data feasibility blocked (provider terms, price, permitted sample not obtained)",
-    "Hosted dataset upstream licence unverified: owner decision needed before real runs are displayed",
-    "DEC-006 (grid and interpolation) undecided; Phase 2 gate not met",
+    "Hosted dataset withdrawn by the owner on 2026-10-20 (DEC-002): no real run may be displayed or repeated; no replacement dataset is authorized",
+    "Phase 2 gate not met (DEC-006 decided as option A; A5 replacement rule is pre-registration-only)",
     "Neural work needs a verified GPU (local torch is a CPU build); no CUDA install approved",
     "API gaps G1-G6 in API_CONTRACTS section 8 are proposals awaiting review by both sessions"
   ]

@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from volatility_lab.evaluation.walkforward import Fold, assert_no_overlap, make_folds
+from volatility_lab.evaluation.walkforward import Fold, LeakageError, assert_no_overlap, make_folds
 from volatility_lab.features.panel import (causal_fill, cell_means, realized_vol, sequence_features,
                                            tabular_features, Prepared)
 from volatility_lab.evaluation.leakage import feature_invariance_check, perturb_after
@@ -71,8 +71,21 @@ class LeakageTests(unittest.TestCase):
     def test_overlap_is_detected(self):
         f = make_folds(self.p, CFG.split)[0]
         bad = Fold(f.test_year, f.val_year, np.r_[f.train, f.val[:3]], f.val, f.test, f.train_rows_end)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(LeakageError):
             assert_no_overlap(self.p, bad)
+        self.assertTrue(issubclass(LeakageError, AssertionError))      # older callers catching AssertionError still work
+
+    def test_leakage_check_is_not_an_assert_and_survives_python_O(self):
+        """``python -O`` strips ``assert``; the guard must still raise (regression: it used bare asserts)."""
+        import ast
+        import inspect
+        import textwrap
+        src = textwrap.dedent(inspect.getsource(assert_no_overlap))
+        self.assertFalse([n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Assert)])
+        f = make_folds(self.p, CFG.split)[0]
+        empty = Fold(f.test_year, f.val_year, f.train[:0], f.val, f.test, f.train_rows_end)
+        with self.assertRaises(LeakageError):                          # an empty set must not pass vacuously
+            assert_no_overlap(self.p, empty)
 
     def test_hyperparameter_selection_never_reads_the_test_year(self):
         p = self.p

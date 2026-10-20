@@ -19,18 +19,18 @@
 | ID | Decision | Status | Blocks | Owner role |
 |---|---|---|---|---|
 | DEC-001 | Initial options market & underlying universe | **INTERIM DECISION 2026-10-19 (owner): SPY** for the private research track (SPX/SPXW deferred) | Phase 0 exit, all later | Project owner / quant lead |
-| DEC-002 | Historical data provider & licensing | **INTERIM DECISION 2026-10-19 (owner): use the hosted Kaggle SPY dataset (OptionsDX-origin, upstream licence unverified) for PRIVATE research only**; Cboe DataShop stays the lead for any public/SPX upgrade, blockers open | Phase 1 start | Project owner / data engineer |
-| DEC-003 | Historical coverage & snapshot frequency | **INTERIM DECISION 2026-10-19 (owner): daily end-of-day snapshot, 2010-01-04 to 2023-12-29 (3,500 surface dates)**, as in the hosted dataset; MVD thresholds still unfrozen | Phase 0 exit | Quant lead / data engineer |
+| DEC-002 | Historical data provider & licensing | **OWNER DECISION 2026-10-20 (supersedes the 2026-10-19 interim): stop using the hosted Kaggle SPY dataset (OptionsDX-origin, upstream licence unverified).** It is not authorized for any further runs, display or export; E-1/E-2/H1-H6 are kept as unpublishable history. No replacement dataset is authorized; the Cboe inquiry stays drafted and unsent; provider and licence remain OPEN | Phase 1 start | Project owner / data engineer |
+| DEC-003 | Historical coverage & snapshot frequency | **INTERIM DECISION 2026-10-19 (owner): daily end-of-day snapshot, 2010-01-04 to 2023-12-29 (3,500 surface dates)**, as in the hosted dataset (that dataset is no longer authorized, DEC-002, so this stays a target, not a data fact); **MVD thresholds M1-M5, M7, M9, M11, M12 and the starting M6 target (60 percent observed nodes) adopted as proposed by the owner on 2026-10-20 and frozen as owner-adopted values, not evidence-based**; items marked TBD-pilot (regime rule, M6/M8 percentiles, c and rho) stay unfrozen; M10 (licence) is unmet | Phase 0 exit | Quant lead / data engineer |
 | DEC-004 | Initial pricing model & instrument assumptions | PROPOSED (conditional on DEC-001) | Phase 2 | Quant lead |
-| DEC-005 | Moneyness convention & maturity definition | PROPOSED | Phase 2 | Quant lead |
+| DEC-005 | Moneyness convention & maturity definition | **DECIDED 2026-10-20 (owner): keep the current convention** - maturity T = calendar days / 365 (no trading-day, holiday or early-close calendar), moneyness k = ln(K/F) as implemented. Changing it later means re-running experiments | Phase 2 | Quant lead |
 | DEC-006 | Surface grid & interpolation method | **DECIDED (option A) 2026-10-19 (owner):** keep current rules (6 tenors x 9 log-moneyness nodes, linear-in-IV in k, no extrapolation) as the documented baseline; alternatives only via the harness under a pre-registered replacement rule | Phase 2 exit | Quant lead |
-| DEC-007 | Backend API framework | PROPOSED | Phase 5 (API) | Backend lead |
-| DEC-008 | Frontend framework & charting/3D technology | NEEDS RESEARCH | Phase 5 | Frontend lead |
+| DEC-007 | Backend API framework | **DECIDED 2026-10-20 (owner), for a local research tool: keep the standard-library, loopback-only, read-only API**; no web framework | Phase 5 (API) | Backend lead |
+| DEC-008 | Frontend framework & charting/3D technology | **DECIDED 2026-10-20 (owner), for a local research tool: keep the static 2D viewer; no 3D, no frontend framework.** Revisit only if the scope changes | Phase 5 | Frontend lead |
 | DEC-009 | Storage & analytical file formats | PROPOSED | Phase 1 (raw store) | Data engineer |
 | DEC-010 | Experiment tracking & artifact versioning | PROPOSED | Phase 3 | ML engineer |
 | DEC-011 | Initial forecasting representation | PROPOSED | Phase 3 | Quant lead / ML engineer |
 | DEC-012 | Initial neural architecture | PROPOSED | Phase 4 | ML engineer |
-| DEC-013 | Deployment target | OPEN | Phase 6 | Project owner |
+| DEC-013 | Deployment target | **DECIDED 2026-10-20 (owner): none - local research tool only** (no deployment, no authentication, no public display). A hosted or public release would need a new decision plus a licence resolution | Phase 6 | Project owner |
 | DEC-014 | Project software licence (added) | OPEN | Public release | Project owner |
 | DEC-015 | Python version, environment & dependency management (added) | OPEN | First code commit | Backend lead |
 
@@ -73,6 +73,12 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Recommendation:** *PROPOSED (lead, not final):* **C1 — Cboe DataShop End-of-Day Option Quotes for SPX/SPXW**, with **C2 — Databento OPRA CBBO-1m** as the fallback and cross-check. Rationale: C1 is the only candidate whose licence text has been read, and it clearly permits the internal research use planned for Phases 1–4. Weakness: price unknown, public-display rights unresolved. **Do not purchase or subscribe until the owner approves a written price.**
 - **Consequences:** determines `SEC-006`, whether the app can be public (DEC-013; until resolved, plan for local single-user exposure only), whether `data/samples/` can include any real data (default: no), and the provider adapter design.
 - **Review trigger:** any licence/ToS change; cost change; Phase 0 exit.
+- **AMENDMENT DEC-002-A (2026-10-21; appended, nothing above is rewritten; recorded from the owner's chat clarification that this is a personal, local research project and that no licence purchase or subscription is a prerequisite for ordinary engineering work; wording awaits owner confirmation):**
+  - *What the 2026-10-20 owner decision (table row above) prohibits:* any further **run**, **display** or **export** of the hosted Kaggle SPY dataset; it keeps E-1/E-2/H1-H6 as unpublishable history; it authorizes **no replacement dataset**; provider and licence stay OPEN; the Cboe inquiry stays unsent.
+  - *Narrowest amendment:* (1) private, local-only research use of the **already-held** SPY artifacts (dataset on the owner's Kaggle account, checkpoints, results) is **permitted in principle**, executed only in Colab, each run still needing its own explicit authorization (AP-003/AP-009); (2) results from it may be shown only on the owner's own machine and must carry the label "SPY end-of-day options, upstream licence unverified, backtest only"; (3) no licence purchase, paid subscription or real-time feed is required to continue documentation, engineering, reproducibility work or planning.
+  - *Still prohibited / unchanged:* export, redistribution, publication or any public display of the data, chain-level derived files, checkpoints or results; hosting (DEC-013); acquiring any new or replacement dataset (needs separate authorization, AP-002a/b); spending money. The upstream OptionsDX terms remain **unverified**; this amendment does not claim they permit the use, it records the owner accepting the personal-use risk for private local work only.
+  - **Owner confirmation (chat, 2026-10-21, AP-011): wording confirmed as written.** It authorizes no run by itself.
+  - Links: [SPY_BASELINE_INVENTORY](docs/research/SPY_BASELINE_INVENTORY.md), [orchestration/DECISIONS.md](orchestration/DECISIONS.md) OR-D7. The table row for DEC-002 keeps its 2026-10-20 text; read it together with this amendment.
 
 ## DEC-003 — Historical coverage and snapshot frequency
 

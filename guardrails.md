@@ -1,6 +1,6 @@
 # guardrails.md — Enforceable Project Guardrails
 
-**Status:** PROPOSED (rules are in force as policy now; automated enforcement is **partial**: the E-1 research package has CPU unit and scientific tests on synthetic data covering parts of GR-QNT-01/02/06, GR-LEAK-01…04, GR-DATA-02/05, GR-ENG-03 and GR-SEC-03, with the remaining gaps listed in [CORE_STATUS](docs/engineering/CORE_STATUS.md) §4; the disposable Phase 0 spike has its own tests ([PHASE0_AUDIT](docs/research/PHASE0_AUDIT.md)); no CI has run yet — a workflow is proposed and unverified)
+**Status:** PROPOSED (rules are in force as policy now; automated enforcement is **partial**: the E-1 research package has CPU unit and scientific tests on synthetic data covering parts of GR-QNT-01/02/05/06, GR-LEAK-01…04, GR-MOD-01, GR-DATA-02/05/06, GR-ENG-03 and GR-SEC-03, with the remaining gaps listed in [CORE_STATUS](docs/engineering/CORE_STATUS.md) §4; the disposable Phase 0 spike has its own tests ([PHASE0_AUDIT](docs/research/PHASE0_AUDIT.md)); no CI has run yet — a workflow is proposed and unverified)
 **Canonical for:** non-negotiable scientific, data, product, security and engineering rules and how each is verified.
 **Source:** foundation brief §3, §9; MP §5, §8–§11, §14, §20–§21, §25. **Related:** [PR.md](PR.md) · [CLAUDE.md](CLAUDE.md) · [docs/engineering/TESTING_STRATEGY.md](docs/engineering/TESTING_STRATEGY.md) · [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
 

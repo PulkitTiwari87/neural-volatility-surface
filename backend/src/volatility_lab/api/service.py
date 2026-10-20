@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import re
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +29,7 @@ from volatility_lab.surfaces.grid import OBSERVED, STATUS_LABELS
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
 MAX_TABLE_ROWS = 5000
 ORIGINS = ("synthetic", "real")
+PANEL_KEYS = ("dates", "tenor_days", "k_nodes", "iv", "status", "spot", "n_quotes")
 
 
 class NotFound(LookupError):
@@ -42,11 +45,19 @@ def _clean(a) -> list:
     return np.where(np.isfinite(a), a, None).tolist() if a.dtype.kind == "f" else a.tolist()
 
 
+def _finite_or_none(x):
+    """A missing scalar is ``None`` in JSON, never NaN and never a made-up number."""
+    x = float(x)
+    return x if np.isfinite(x) else None
+
+
 def _num(s: str):
+    """Table cell -> finite number, ``None`` for nan/inf/overflow (JSON has no such value; never a made-up number), else text."""
     try:
-        return float(s)
+        x = float(s)
     except ValueError:
         return s
+    return x if math.isfinite(x) else None
 
 
 class RunStore:
@@ -63,17 +74,48 @@ class RunStore:
         return d
 
     def _panel(self, d: Path) -> dict:
-        with np.load(d / "panel.npz") as z:
-            return {k: z[k] for k in z.files}
+        try:
+            with np.load(d / "panel.npz") as z:      # allow_pickle stays False: a panel file can never run code
+                panel = {k: z[k] for k in z.files}
+        except (OSError, ValueError, zipfile.BadZipFile) as e:
+            raise BadRequest("panel.npz is unreadable") from e
+        missing = [k for k in PANEL_KEYS if k not in panel]
+        if missing:
+            raise BadRequest(f"panel.npz lacks required arrays: {missing}")
+        return panel
 
     @staticmethod
     def _json(path: Path) -> dict:
-        return json.loads(path.read_text()) if path.is_file() else {}
+        if not path.is_file():
+            return {}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            raise BadRequest(f"{path.name} is not valid JSON") from e
+        if not isinstance(data, dict):
+            raise BadRequest(f"{path.name} must hold a JSON object")
+        return data
+
+    @staticmethod
+    def _inside(fp: Path, folder: Path) -> bool:
+        """A served file must be a direct child of its folder after symlinks are resolved."""
+        return fp.resolve().parent == folder.resolve()
 
     def _label(self, d: Path) -> dict:
-        meta = self._json(d / "meta.json")
-        origin = meta.get("origin") if meta.get("origin") in ORIGINS else "unlabelled"
-        return {"origin": origin, "description": str(meta.get("description", ""))}
+        try:
+            meta = self._json(d / "meta.json")
+        except BadRequest:
+            meta = {}                                  # unreadable metadata => the run is simply "unlabelled"
+        try:
+            m_origin = self._json(d / "manifest.json").get("origin")
+        except BadRequest:
+            m_origin = None                            # run_info reports a malformed manifest itself
+        m_origin = m_origin if m_origin in ORIGINS else None
+        origin = meta.get("origin") if meta.get("origin") in ORIGINS else None
+        label = {"origin": origin or m_origin or "unlabelled", "description": str(meta.get("description", ""))}
+        if origin and m_origin and origin != m_origin:  # two labels that disagree: trust neither (GR-DATA-04)
+            label.update(origin="unlabelled", origin_conflict=True)
+        return label
 
     def list_runs(self) -> list:
         out = []
@@ -117,7 +159,7 @@ class RunStore:
         return {
             "run": run_id, **self._label(d), "index": index,
             "date": str(panel["dates"][index].astype("datetime64[D]")),
-            "spot": float(panel["spot"][index]), "n_quotes": int(panel["n_quotes"][index]),
+            "spot": _finite_or_none(panel["spot"][index]), "n_quotes": int(panel["n_quotes"][index]),
             "tenor_days": panel["tenor_days"].tolist(), "k_nodes": panel["k_nodes"].tolist(),
             "iv": _clean(panel["iv"][index]), "status": panel["status"][index].tolist(),
             "iv_units": "decimal (0.20 = 20%)",
@@ -127,7 +169,7 @@ class RunStore:
         if not isinstance(model, str) or not NAME.match(model):
             raise BadRequest("invalid forecast name")
         fp = d / "forecasts" / f"{model}.npz"
-        if not fp.is_file():
+        if not fp.is_file() or not self._inside(fp, d / "forecasts"):
             raise NotFound(f"no such forecast: {model}")
         return fp
 
@@ -173,10 +215,13 @@ class RunStore:
         if not isinstance(name, str) or not NAME.match(name):
             raise BadRequest("invalid table name")
         fp = d / "tables" / f"{name}.csv"
-        if not fp.is_file():
+        if not fp.is_file() or not self._inside(fp, d / "tables"):
             raise NotFound(f"no such table: {name}")
-        with open(fp, newline="") as fh:
-            rows = list(csv.reader(fh))
-        header, body = rows[0], rows[1:]
+        try:
+            with open(fp, newline="", encoding="utf-8") as fh:
+                rows = list(csv.reader(fh))
+        except (OSError, UnicodeDecodeError, csv.Error) as e:
+            raise BadRequest(f"table {name} is unreadable") from e
+        header, body = (rows[0], rows[1:]) if rows else ([], [])       # an empty file is an empty table, not a crash
         return {"run": run_id, "table": name, "columns": header, "truncated": len(body) > MAX_TABLE_ROWS,
                 "rows": [[_num(c) for c in r] for r in body[:MAX_TABLE_ROWS]]}

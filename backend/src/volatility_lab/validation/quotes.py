@@ -24,7 +24,8 @@ from volatility_lab.pricing import bs
 
 QUOTE_REASONS = ("no_parity_forward", "implausible_forward", "k_out_of_range", "missing_or_no_bid",
                  "crossed_or_locked", "low_price", "wide_spread", "iv_below_lower_bound",
-                 "iv_above_upper_bound", "iv_invalid_input", "iv_out_of_bounds")
+                 "iv_above_upper_bound", "iv_invalid_input", "iv_out_of_bounds",
+                 "iv_below_solver_floor", "iv_above_solver_ceiling")
 
 
 def estimate_forwards(wide: pd.DataFrame, cfg: DataConfig) -> pd.DataFrame:
@@ -100,17 +101,32 @@ def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig):
     DFv = df.DF.to_numpy()
     iv, status = bs.implied_vol(mid[ok] / DFv[ok], F[ok], K[ok], T[ok], is_call[ok])
     for code, reason in ((bs.BELOW_LOWER_BOUND, "iv_below_lower_bound"), (bs.ABOVE_UPPER_BOUND, "iv_above_upper_bound"),
-                         (bs.INVALID_INPUT, "iv_invalid_input")):
+                         (bs.INVALID_INPUT, "iv_invalid_input"), (bs.BELOW_SOLVER_FLOOR, "iv_below_solver_floor"),
+                         (bs.ABOVE_SOLVER_CEILING, "iv_above_solver_ceiling")):
         ledger.reject(reason, int((status == code).sum()))
     in_bounds = (status == bs.OK) & (iv >= cfg.min_iv) & (iv <= cfg.max_iv)
     ledger.reject("iv_out_of_bounds", int(((status == bs.OK) & ~in_bounds).sum()))
     ledger.kept = int(in_bounds.sum())
+
+    # per-snapshot ledger (Phase 1 A2): every row's terminal disposition, 0 = kept, else 1-based index into QUOTE_REASONS
+    terminal = first.astype(int)
+    solver = np.zeros(status.shape, dtype=int)
+    for code, reason in ((bs.BELOW_LOWER_BOUND, "iv_below_lower_bound"), (bs.ABOVE_UPPER_BOUND, "iv_above_upper_bound"),
+                         (bs.INVALID_INPUT, "iv_invalid_input"), (bs.BELOW_SOLVER_FLOOR, "iv_below_solver_floor"),
+                         (bs.ABOVE_SOLVER_CEILING, "iv_above_solver_ceiling")):
+        solver[status == code] = QUOTE_REASONS.index(reason) + 1
+    solver[(status == bs.OK) & ~in_bounds] = QUOTE_REASONS.index("iv_out_of_bounds") + 1
+    terminal[ok] = solver
+    ledger.note_dates(df.date.to_numpy(), terminal, QUOTE_REASONS)
 
     sel = np.flatnonzero(ok)[in_bounds]
     quotes = pd.DataFrame({
         "date": df.date.to_numpy()[sel], "expiry": df.expiry.to_numpy()[sel], "T": T[sel],
         "strike": K[sel], "k": k[sel], "iv": iv[in_bounds], "is_call": is_call[sel], "mid": mid[sel],
         "rel_spread": rel[sel], "F": F[sel], "DF": DFv[sel], "spot": S[sel], "vendor_iv": vend[sel],
+        # GR-QNT-03: per-quote solver residual, |model_price(iv) - undiscounted mid| / F (decimal of forward)
+        "reprice_err": np.abs(bs.black76_price(F[sel], K[sel], T[sel], iv[in_bounds], is_call[sel])
+                              - mid[sel] / DFv[sel]) / F[sel],
     }).sort_values(["date", "expiry", "strike"], kind="mergesort").reset_index(drop=True)
     ledger.check()
 
@@ -123,6 +139,11 @@ def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig):
         "forward_slices_no_pairs": int((fw.fstat == 1).sum()),
         "forward_slices_implausible": int((fw.fstat == 2).sum()),
         "quotes_kept": int(len(quotes)),
+        # GR-QNT-03: solver residual of kept quotes and solver-status reject counts (all non-OK statuses)
+        "reprice_err_max": float(quotes.reprice_err.max()) if len(quotes) else None,
+        "reprice_err_median": float(quotes.reprice_err.median()) if len(quotes) else None,
+        "solver_status_rejects": {name: int((status == code).sum())
+                                  for code, name in bs.STATUS_NAMES.items() if code != bs.OK},
         "vendor_iv_compared": int(good.sum()),
         # unit-agnostic: ~1.0 if the vendor IV is a decimal, ~100 if it is in percent
         "vendor_iv_median_ratio_vendor_over_ours": float(np.median(vv[good] / ours[good])) if good.any() else None,

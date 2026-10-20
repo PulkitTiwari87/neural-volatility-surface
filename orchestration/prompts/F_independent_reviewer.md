@@ -1,0 +1,7 @@
+# Agent F — Independent Verification Reviewer (runs AFTER reports A–E exist)
+
+Read `_COMMON.md` first. **Owned file:** `orchestration/reports/INDEPENDENT_REVIEW.md` (only). Report-only.
+
+Task: independently challenge the reports `REPO_AUDIT.md`, `DATA_SOURCE_RESEARCH.md`, `ENGINEERING_REPORT.md`, `RESEARCH_DESIGN.md`, `UI_INTEGRATION_REPORT.md` and the orchestrator's `SHARED_STATUS.md` / `MASTER_PLAN.md`. Do **not** trust their conclusions: spot-check at least 10 factual claims against the actual files (cite file:line), re-derive any numeric claim you can (counts, line numbers, test totals), and verify every cited source URL claim for data-rights statements is stated with a URL and access date (you may fetch those pages to confirm; no data downloads).
+Look for: unsupported or overstated claims, invented numbers, "implemented/passed" language without execution evidence, data-rights assumptions, proposed patches that are wrong or would regress (inspect the exact code), overlapping edits/conflicts between proposals, methodology flaws missed by D, acceptance criteria not met, anything touching a guardrail.
+Output a findings table: ID · severity (critical/major/minor) · report+section · evidence (file:line) · reproduction/verification step · recommended correction. End with a verdict per report: ACCEPT / ACCEPT WITH CORRECTIONS / REJECT, and a list of statements the orchestrator must correct before presenting an integrated status.

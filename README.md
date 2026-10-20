@@ -2,7 +2,7 @@
 
 > **Research and education software. Not investment advice, not a trading system.** Forecasts are uncertain, market data may be delayed or incomplete, and every result must be judged against simple baselines.
 
-**Repository status:** documentation scaffold plus one **disposable, synthetic-only Phase 0 feasibility spike** (`scripts/phase0_synthetic/`, implemented and reproduced locally). **No product code, no real market data, no neural models and no real-market results exist.** Phase 0 is **incomplete**.
+**Repository status:** documentation scaffold; a **disposable, synthetic-only Phase 0 spike** (`scripts/phase0_synthetic/`); a **research package** `backend/src/volatility_lab` (OptionsDX-format adapter, quote validation, Black-76 IV, constant-maturity surfaces, purged walk-forward, baselines, GPU-only MLP/GRU); a read-only stdlib research API and a static 2D viewer (`frontend/`). Experiments E-1, E-2 and H1–H6 were each run **once** on a hosted SPY dataset of **unverified licence**; the results are **descriptive only and not validated** ([review](docs/research/PHASE4_NEURAL_EVIDENCE_REVIEW.md)). Only the Foundation gate is accepted (owner, 2026-10-19). **Phase 0 is incomplete and its synthetic inference audit is CLOSED — NO-GO.** No real-data feasibility, licensing decision or validated forecasting claim exists.
 
 ## Research objective
 
@@ -16,7 +16,7 @@ Given the option market observed at time *t*, how accurately can a model forecas
 
 **Known limitations** are tracked in [docs/research/KNOWN_LIMITATIONS.md](docs/research/KNOWN_LIMITATIONS.md). Notably: IV is inferred, not observed; surfaces are sparse and interpolation is not market data; neural superiority is a hypothesis, not an expectation.
 
-## High-level architecture (proposed, not implemented)
+## High-level architecture (target design; the status table below says which parts exist)
 
 ```mermaid
 flowchart LR
@@ -41,13 +41,16 @@ Details: [architecture.md](architecture.md).
 | Experiment E-2 (owner-directed follow-up, 2026-10-13): fixed-expiry vs nearest-expiry label | `IMPLEMENTED` and executed once on a Kaggle Tesla T4 (same hosted SPY data, private committed run): the E-1 hypothesis that expiry switching inflates short-tenor error is **not supported**; persistence is harder under the same-expiry label; no model shown to improve on persistence; descriptive only ([E2_FIXED_EXPIRY_RESULTS](docs/research/E2_FIXED_EXPIRY_RESULTS.md)). Not `VALIDATED` |
 | Engineering pass 2026-10-14: Phase 1 storage, Phase 3 small-sample flags, Phase 5 viewer (no training) | `IMPLEMENTED` as partial slices, tests run: write-once raw store + versioned datasets (`storage/`), `insufficient_n` flag in per-region metrics, local read-only stdlib API (`api/`) and static 2D viewer (`frontend/index.html`) with origin banner and lineage. Demonstrated on a labelled **synthetic** run only. No 3D view, no auth/CI/deployment; phase gates 1, 3, 5 **not** claimed because the Phase 0 gate is unmet. See [CHANGELOG](CHANGELOG.md) |
 | Spike code (`scripts/phase0_synthetic/`) | IMPLEMENTED as a disposable, synthetic-only spike (standard library; not product code); everything else under `backend/` remains PLANNED |
-| Phases 1–7 (data, IV/surfaces, baselines, neural, UI, release, advanced) | PLANNED |
+| Phases 1–5 (data, IV/surfaces, baselines, neural, UI) | `IN_PROGRESS` as **partial** slices with offline synthetic tests; **no gate claimed** (per-phase detail: [CORE_STATUS](docs/engineering/CORE_STATUS.md)). Phase 6 (reliability/release) `PLANNED` with independent pieces started (audit script, import-direction test, unrun CI draft); Phase 7 `DEFERRED` |
+| Experiments H1–H6 (owner-directed, 2026-10-16…19) | Executed once each on Kaggle/Colab GPUs, hosted SPY data of **unverified licence**, descriptive only. Under the **fixed-expiry** label the GRU ensemble clears the pre-registered rule in H5 (skill +0.035 vs persistence, 8/8 test years) and H6 (+0.048, 7/8); under the **nearest-expiry** label it is negative in both, and the MLP is negative in both. The best baseline is the H3 PCA-ridge with calendar features (+0.0436 fixed-expiry), so H5 is below it and H6 is about 0.004 above it — not interpretable (one run, no intervals, different validation protocol). Formal verdict `holds_under_fixed_expiry_label_only`, **not** a general improvement; calendar features may simply encode the deterministic roll-down. Figures as recorded in the review, not independently re-verified (raw outputs were not saved). Not `VALIDATED` |
 | Synthetic feasibility spike | IMPLEMENTED locally; reproduced by re-running the same code (not an independent re-implementation; audit: [PHASE0_AUDIT](docs/research/PHASE0_AUDIT.md), plan: [NEXT_STEPS](docs/research/NEXT_STEPS.md)); proves pipeline *logic* on synthetic data only |
 | Real-data feasibility | **PENDING** — blocked on written provider terms (Cboe questions drafted, **not sent**), pricing, and a permitted real sample; nothing measured on real data |
-| Neural forecasting on real options data | **NOT IMPLEMENTED, NOT VALIDATED** — no neural model has been trained on any data; no claim about model superiority is made |
-| Provider, market, audience, product toolchain | **OPEN** — only proposals exist (decision.md: 0 of 15 decided) |
-| Product code (`backend/`, `frontend/`), CI, real data | PLANNED (none exist) |
-| Technical decisions ([decision.md](decision.md)) | 0 of 15 decided |
+| Neural forecasting on real options data | **IMPLEMENTED as GPU experiments on hosted data of unverified licence; NOT VALIDATED** — see the H1–H6 row; the inference-based verdict stays NO-GO; no claim about general model superiority is made |
+| Provider, audience, product toolchain | **OPEN** — no data source is authorized: the owner **withdrew the hosted Kaggle dataset on 2026-10-20** (DEC-002); SPY and the daily end-of-day target (DEC-001/003) are interim targets only |
+| Owner decisions 2026-10-20 | Decided: MVD thresholds adopted as proposed (owner-adopted, not evidence-based; TBD-pilot items still open), calendar-days/365 maturity (DEC-005), stdlib API + static 2D viewer, no 3D (DEC-007/008), no deployment — local research tool only (DEC-013). Still open: provider/licence (DEC-002), software licence (DEC-014), toolchain (DEC-015) |
+| Research code (`backend/src/volatility_lab`), 2D viewer (`frontend/`) | `IMPLEMENTED` as research tooling with offline synthetic tests (`backend/tests`); not product code; no authentication, deployment or 3D view |
+| CI | **Drafted, never run** ([workflow](.github/workflows/tests.yml)); local test passes are not CI passes. Real data is not in Git |
+| Technical decisions ([decision.md](decision.md)) | 6 of 15 decided (DEC-002 withdrawal of the hosted data, DEC-005, DEC-006, DEC-007, DEC-008, DEC-013), 2 interim (DEC-001, DEC-003), 7 open or proposed |
 
 Status vocabulary: `PLANNED`, `PROPOSED`, `IN_PROGRESS`, `IMPLEMENTED`, `VALIDATED`, `BLOCKED`, `DEFERRED`. A document existing never implies the thing it describes exists.
 

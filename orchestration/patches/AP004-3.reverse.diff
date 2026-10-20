@@ -1,0 +1,60 @@
+--- backend/src/volatility_lab/api/service.py	2026-10-21 00:12:25.948048500 +0530
++++ orchestration/patches/pre/api_service.py	2026-10-21 00:10:15.906845500 +0530
+@@ -16,7 +16,6 @@
+ 
+ import csv
+ import json
+-import math
+ import re
+ import zipfile
+ from pathlib import Path
+@@ -52,12 +51,10 @@
+ 
+ 
+ def _num(s: str):
+-    """Table cell -> finite number, ``None`` for nan/inf/overflow (JSON has no such value; never a made-up number), else text."""
+     try:
+-        x = float(s)
++        return float(s)
+     except ValueError:
+         return s
+-    return x if math.isfinite(x) else None
+ 
+ 
+ class RunStore:
+--- backend/src/volatility_lab/api/server.py	2026-10-21 00:12:26.580658300 +0530
++++ orchestration/patches/pre/api_server.py	2026-10-21 00:10:15.988711200 +0530
+@@ -29,7 +29,6 @@
+ _FORECAST = re.compile(r"^/api/runs/([^/]+)/forecasts/([^/]+)/(\d{1,7})$")
+ _TABLE = re.compile(r"^/api/runs/([^/]+)/tables/([^/]+)$")
+ _RUN = re.compile(r"^/api/runs/([^/]+)$")
+-_HOST = re.compile(r"^(?:\[([0-9a-f:.]+)\]|([^:\[\]@\s]+))(?::\d{1,5})?$")
+ 
+ 
+ def _json(code: int, obj) -> tuple:
+@@ -75,24 +74,13 @@
+             self.end_headers()
+             self.wfile.write(body)
+ 
+-        def _host_ok(self) -> bool:
+-            """DNS-rebinding guard for a local-only tool: only a loopback name may address this server. An absent or
+-            empty Host header (HTTP/1.0 clients) is allowed; the socket is loopback-bound regardless."""
+-            host = (self.headers.get("Host") or "").strip().lower()
+-            if not host:
+-                return True
+-            m = _HOST.match(host)
+-            return bool(m) and (m.group(1) or m.group(2)) in LOOPBACK
+-
+         def do_GET(self):  # noqa: N802
+-            if not self._host_ok():
+-                return self._send(*_json(400, {"error": "unexpected Host header"}), {})
+             self._send(*dispatch(store, self.path, frontend), {})
+ 
+         def _refuse(self):
+             self._send(*_json(405, {"error": "read-only API"}), {"Allow": "GET"})
+ 
+-        do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = _refuse  # noqa: N815
++        do_POST = do_PUT = do_DELETE = do_PATCH = _refuse  # noqa: N815
+ 
+         def log_message(self, *_):  # no request logging
+             pass

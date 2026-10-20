@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Read-only Volatility Surface Viewer and research workbench for stored implied-volatility runs. Research and education only; not a trading tool.">
+<meta name="referrer" content="no-referrer">
+<title>Neural Volatility Surface · Quantitative Research Workbench</title>
+<style>
+/* Tokens: dashboard-design/DESIGN_SYSTEM.md. Fonts: the research server's CSP blocks font files, so Geist and
+   JetBrains Mono are used only if installed locally; otherwise the system stack applies. */
+:root{
+  --font:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --r-sm:6px;--r:8px;--r-lg:12px;
+}
+[data-theme=dark]{
+  --bg:#0c1016;--s1:#121821;--s2:#18202b;--s3:#202a37;--line:#2a3544;
+  --ink:#e6ebf2;--ink2:#a7b2c2;--muted:#7d8999;--accent:#86c8e8;--on-accent:#0c1016;--focus:#86c8e8;
+  --ok:#5fb589;--prog:#e0a53a;--plan:#8a9bb5;--block:#e5675e;--na:#8c97a8;--unv:#c9b26b;--fail:#e5675e;
+  --warn-bg:#2b2412;--err-bg:#2c1a1b;
+  --lo:27,58,85;--hi:143,208,240;
+}
+[data-theme=light]{
+  --bg:#f3f5f7;--s1:#ffffff;--s2:#e8ecf0;--s3:#dde3ea;--line:#cfd6de;
+  --ink:#111722;--ink2:#4b586a;--muted:#5a6575;--accent:#1f6f99;--on-accent:#ffffff;--focus:#1f6f99;
+  --ok:#276b49;--prog:#8a5a0e;--plan:#4f5f7a;--block:#a93a33;--na:#5a6575;--unv:#75621c;--fail:#a93a33;
+  --warn-bg:#f4ead2;--err-bg:#f6e0de;
+  --lo:27,58,85;--hi:31,111,153;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:8px;top:-60px;background:var(--accent);color:var(--on-accent);padding:10px 14px;border-radius:var(--r);z-index:100;font-weight:600}
+.skip:focus{top:8px}
+.mono{font-family:var(--mono);font-size:.9em}
+.muted{color:var(--muted)}.ink2{color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.ico{width:1em;height:1em;flex:none;display:block}
+
+/* ---------- shared components ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;min-height:44px;padding:0 18px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;font-weight:600;text-decoration:none;transition:transform .12s ease-out,background-color .15s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.dark{background:#111722;color:#fff}
+.btn.bsec{background:var(--s2);color:var(--ink)}
+.btn.sm{min-height:40px;padding:0 12px;font-weight:500}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.link{color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:4px;display:inline-flex;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:var(--r-sm);background:var(--s2);font-size:13px;font-weight:500;white-space:nowrap;line-height:1.5}
+.chip svg{width:15px;height:15px}
+.chip.completed{color:var(--ok)}.chip.progress{color:var(--prog)}.chip.planned{color:var(--plan)}
+.chip.blocked{color:var(--block)}.chip.unavailable{color:var(--na)}.chip.unverified{color:var(--unv)}.chip.failed{color:var(--fail)}
+.chip.neutral{color:var(--ink2)}
+.src{font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.src.live{color:var(--accent)}
+.src i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.panel{background:var(--s1);border-radius:var(--r-lg);padding:22px 24px;min-width:0}
+.panel>header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.panel h2,.panel h3{font-size:20px}
+.panel .foot{margin-top:14px;font-size:13px;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:24px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.kv{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:10px 16px;margin:0}
+.kv dt{color:var(--ink2)}.kv dd{margin:0;text-align:right;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+table.t th{font-weight:500;color:var(--ink2);font-size:13px;text-align:left;padding:10px 12px;background:var(--s2);white-space:nowrap}
+table.t th:first-child{border-radius:var(--r) 0 0 var(--r)}table.t th:last-child{border-radius:0 var(--r) var(--r) 0}
+table.t td{padding:13px 12px;font-size:14px;vertical-align:top}
+table.t tbody tr:hover td{background:var(--s2)}
+table.t th.n,table.t td.n{text-align:right}
+table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10px}
+.state{border-radius:var(--r);background:var(--s2);padding:26px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.state h3{font-size:16px}
+.state p{color:var(--ink2);max-width:62ch}
+.state.error{background:var(--err-bg)}.state.warn{background:var(--warn-bg)}
+.skel{background:var(--s2);border-radius:var(--r);min-height:18px}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r);background:var(--warn-bg);color:var(--ink)}
+.banner.info{background:var(--s2)}
+.banner svg{margin-top:3px;width:16px;height:16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:12px 14px;min-height:44px;cursor:pointer;color:var(--ink2);font-weight:500;white-space:nowrap}
+.tab[aria-selected=true],.tab[aria-current=page]{color:var(--accent);border-bottom-color:var(--accent)}
+.seg{display:inline-flex;background:var(--s2);border-radius:var(--r);padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;min-height:40px;min-width:44px;padding:0 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--ink2)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink2);min-width:0}
+.field select{min-height:44px;background:var(--s2);border:1px solid transparent;border-radius:var(--r);padding:0 12px;color:var(--ink);max-width:100%}
+.field input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
+.sw{width:18px;height:18px;border-radius:4px;display:inline-block;flex:none;vertical-align:middle}
+.sw.s3{background:var(--accent)}
+.sw.s1{background-color:rgba(var(--hi),.28);background-image:repeating-linear-gradient(135deg,var(--ink) 0 1.5px,transparent 1.5px 5px)}
+.sw.s2{background-color:rgba(var(--hi),.28);background-image:radial-gradient(circle,var(--ink) 1.2px,transparent 1.6px);background-size:5px 5px}
+.sw.s0{border:1.5px dashed var(--muted);background:none}
+.sw.pred{background:var(--s2);border:2px solid var(--accent)}
+.legend{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.legend span{display:inline-flex;gap:8px;align-items:center}
+.diverge{height:12px;border-radius:6px;background:linear-gradient(90deg,#5aa9e6,#1b222c 50%,#e8924a)}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--s2)}
+.bar i{display:block;height:100%}
+
+/* ---------- heatmap ---------- */
+.heat{display:grid;gap:3px;min-width:420px}
+.heat .hc,.heat .hh{min-height:40px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;font-size:14px;font-weight:500;border:0;padding:0;cursor:pointer;position:relative}
+.heat.sm .hc,.heat.sm .hh{min-height:30px;font-size:12px}
+.heat .hh{background:none;color:var(--ink2);font-size:13px;font-weight:500;cursor:default}
+.heat .hc.miss{border:1.5px dashed var(--muted);color:var(--muted);background:none!important}
+.heat .hc.sel{outline:3px solid var(--ink);outline-offset:1px;z-index:1}
+.heat .hc[disabled]{cursor:default}
+.axis-t{font-size:13px;color:var(--ink2);margin:8px 0 0}
+
+/* ---------- workbench shell ---------- */
+.wb{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh;background:var(--bg)}
+.side{background:var(--s1);padding:24px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+.brand{padding:0 8px;text-decoration:none;color:var(--ink);display:block}
+.brand b{display:block;font-size:17px;letter-spacing:-.02em;line-height:1.25}
+.brand span{font-size:13px;color:var(--ink2)}
+.nav{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.nav a,.homelink{display:flex;gap:12px;align-items:center;padding:0 12px;min-height:44px;border-radius:var(--r);color:var(--ink2);text-decoration:none;font-weight:500}
+.nav a svg,.homelink svg{width:18px;height:18px}
+.nav a:hover,.homelink:hover{background:var(--s2);color:var(--ink)}
+.nav a[aria-current=page]{background:var(--s3);color:var(--accent)}
+.homelink{margin-top:auto}
+.main{min-width:0;padding:0 32px 64px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px 24px;padding:22px 0 8px;flex-wrap:wrap}
+.top h1{font-size:32px}
+.ctx{display:flex;gap:6px 20px;flex-wrap:wrap;color:var(--ink2);font-size:14px;align-items:center}
+.ctx b{font-weight:500;color:var(--ink)}
+.lede{color:var(--ink2);max-width:70ch;margin:4px 0 24px}
+.mbar{display:none}
+.drawerbg{display:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px}
+.grid2.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.qa{display:grid;grid-template-columns:minmax(150px,.9fr) 2.2fr auto;gap:8px 20px;padding:16px 0;align-items:start}
+.qa .q{color:var(--ink2);font-size:14px}
+.qa .rt{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.pipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.node{background:var(--s2);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:96px}
+.node .nh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.node .nm{font-weight:600;line-height:1.3}
+.node .ns{font-size:13px;color:var(--ink2)}
+.node.blocked{box-shadow:inset 3px 0 0 var(--block)}
+.sel-readout{min-height:2.6em}
+.bars{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.bars i{display:inline-block;height:8px;border-radius:4px;background:var(--accent);min-width:2px}
+.bars i.neg{background:var(--plan)}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{fill:var(--ink2);font-size:12px;font-family:var(--font)}
+
+/* ---------- landing ---------- */
+.ln{background:var(--bg);color:var(--ink)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+.lnav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 0;flex-wrap:wrap}
+.lnav .brand{padding:0}
+.lnav ul{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.lnav ul a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:var(--ink2);text-decoration:none;font-weight:500;border-radius:var(--r)}
+.lnav ul a:hover{color:var(--ink)}
+.lnav ul a[aria-current=page]{color:var(--accent)}
+.lmenu{display:none}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:clamp(24px,5vw,72px);align-items:center;padding:clamp(40px,8vw,104px) 0 clamp(48px,8vw,96px)}
+.hero h1{font-size:clamp(2.4rem,5vw,4.5rem);line-height:.98;letter-spacing:-.035em}
+.hero .sub{font-size:clamp(1.05rem,1.6vw,1.3rem);color:var(--ink2);max-width:46ch;margin:28px 0 36px;line-height:1.55}
+.hero .acts{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.plate{background:#0c1016;color:#e6ebf2;border-radius:16px;padding:clamp(18px,3vw,32px)}
+.plate h2,.plate h3{font-size:15px;font-weight:500;color:#a7b2c2;letter-spacing:0}
+.plate .cap{font-size:13px;color:#a7b2c2;margin-top:14px}
+.cgrid{display:grid;grid-template-columns:auto repeat(9,minmax(0,1fr));gap:4px;align-items:center;margin-top:16px}
+.cgrid .c{aspect-ratio:1.5;border-radius:4px;min-height:22px}
+.cgrid .c.s3{background:#86c8e8}
+.cgrid .c.s1{background-color:rgba(134,200,232,.22);background-image:repeating-linear-gradient(135deg,#86c8e8 0 1.5px,transparent 1.5px 5px)}
+.cgrid .c.s2{background-color:rgba(134,200,232,.22);background-image:radial-gradient(circle,#86c8e8 1.2px,transparent 1.6px);background-size:5px 5px}
+.cgrid .c.s0{border:1.5px dashed #7d8999}
+.cgrid .rl{font-family:var(--mono);font-size:12px;color:#a7b2c2;padding-right:8px;text-align:right}
+.meta{font-size:14px;color:var(--ink2);margin-top:14px}
+.sec{padding:clamp(56px,9vw,120px) 0}
+.sec.step{background:var(--s2)}
+.sec h2.big{font-size:clamp(1.9rem,3.6vw,2.9rem);letter-spacing:-.03em;max-width:18ch}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,5vw,72px)}
+.split p+p{margin-top:18px}
+.split .txt{font-size:1.125rem;line-height:1.6;color:var(--ink2);max-width:62ch}
+.pull{margin-top:28px;padding-left:18px;border-left:3px solid var(--accent)}
+.pull p{color:var(--ink);font-size:1.05rem;margin-top:10px}
+.caprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 24px;padding:18px 0;align-items:center}
+.caprow h3{font-size:1.1rem;font-weight:500;letter-spacing:-.01em}
+.caprow p{color:var(--ink2);font-size:.95rem;grid-column:1}
+.caprow .chip{grid-column:2;grid-row:1/span 2;align-self:center}
+.prev{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;margin-top:20px}
+.prev .side2{background:#121821;border-radius:12px;padding:18px;color:#e6ebf2;align-self:start}
+.prev .side2 h3{font-size:15px;font-weight:600;color:#e6ebf2}
+.prev .side2 dl{display:grid;grid-template-columns:1fr auto;gap:10px 12px;margin:14px 0 0}
+.prev .side2 dt{color:#a7b2c2}.prev .side2 dd{margin:0;font-variant-numeric:tabular-nums}
+.plate .seg{background:#18202b}.plate .seg button{color:#a7b2c2}.plate .seg button[aria-pressed=true]{background:#86c8e8;color:#0c1016}
+.plate .chip{background:#18202b;color:#a7b2c2}
+.tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:20px 12px;margin:44px 0 0;padding:0;list-style:none}
+.tl li{display:flex;flex-direction:column;align-items:flex-start;gap:8px;position:relative;padding-top:6px}
+.tl li::before{content:"";position:absolute;left:0;right:-12px;top:24px;height:2px;background:var(--line)}
+.tl li:last-child::before{right:0}
+.tl .dot{position:relative;z-index:1;width:36px;height:36px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--line)}
+.tl .dot svg{width:20px;height:20px}
+.tl b{font-weight:600;line-height:1.3}
+.tl small{font-size:13px;color:var(--ink2)}
+.integ{background:var(--s2);border-radius:20px;padding:clamp(24px,4vw,56px)}
+.integ .l2{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.integ .l2 div{display:flex;gap:12px;align-items:center;color:var(--ink)}
+.stl{display:flex;flex-direction:column;gap:14px;margin:0}
+.stl>div{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.stl dt{color:var(--ink2)}.stl dd{margin:0}
+.dl2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px;margin-top:28px;list-style:none;padding:0}
+.dl2 li a{display:flex;justify-content:space-between;align-items:center;padding:18px 0;color:var(--ink);text-decoration:none;font-weight:500;min-height:44px}
+.dl2 li a:hover{color:var(--accent)}
+.lfoot{background:var(--s2);padding:32px 0;margin-top:clamp(40px,6vw,80px)}
+.lfoot .wrap{display:flex;gap:16px 32px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.lfoot nav{display:flex;gap:20px;flex-wrap:wrap}
+.lfoot a{color:var(--ink2);text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .5s ease-out,transform .5s ease-out}
+.reveal.in{opacity:1;transform:none}
+.noscript{padding:24px}
+
+@media (max-width:1100px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}.lnav>.btn.dark{display:none}}
+@media (max-width:900px){
+  .hero,.split,.prev{grid-template-columns:minmax(0,1fr)}
+  .dl2{grid-template-columns:minmax(0,1fr)}
+  .lmenu{display:inline-flex}
+  .lnav ul{display:none;flex-direction:column;width:100%;order:3}
+  .lnav ul.open{display:flex}
+  .lnav .btn.dark{display:none}
+  .wb{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;z-index:60;left:0;top:0;bottom:0;width:min(86vw,300px);transform:translateX(-102%);visibility:hidden;transition:transform .2s ease-out,visibility .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  .side.open{transform:none;visibility:visible}
+  .drawerbg.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55}
+  .mbar{display:flex;align-items:center;gap:12px;padding:12px 0;position:sticky;top:0;background:var(--bg);z-index:20}
+  .main{padding:0 18px 56px}
+  .top h1{font-size:26px}
+  .qa{grid-template-columns:minmax(0,1fr)}
+  .kv{grid-template-columns:minmax(0,1fr)}.kv dd{text-align:left}
+  .grid3,.grid2.even{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.reveal{opacity:1;transform:none}}
+@media (prefers-contrast:more){.panel,.state,.node{outline:1px solid var(--line)}}
+@media (forced-colors:active){.heat .hc.sel{outline:3px solid Highlight}.chip{border:1px solid CanvasText}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="app"></div>
+<div id="live" class="sr" aria-live="polite" role="status"></div>
+<noscript><p class="noscript">This research workbench needs JavaScript. All of its data is read from the local research API.</p></noscript>
+<script>
+"use strict";
+/* =====================================================================================================
+   Neural Volatility Surface · Quantitative Research Workbench
+   Single self-contained file: the research server (backend/src/volatility_lab/api/server.py) serves exactly
+   this one file under a strict CSP. No framework, no dependencies, no network calls except the GET routes of
+   the same origin. Design reference: dashboard-design/. Every value is read from the API or is a labelled
+   "Documented" snapshot of a project document; nothing here is a model result of its own.
+   ===================================================================================================== */
+
+/* ---------- small DOM helpers (API data never goes through innerHTML) ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat(Infinity)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const tpl = document.createElement("template");
+function ico(name) { tpl.innerHTML = ICONS[name] || ICONS.dot; const s = tpl.content.firstChild.cloneNode(true); s.setAttribute("class", "ico"); s.setAttribute("aria-hidden", "true"); return s; }
+const S = d => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICONS = {
+  completed: S('<circle cx="10" cy="10" r="7.5"/><path d="M6.6 10.2l2.4 2.4 4.4-4.8"/>'),
+  progress: S('<circle cx="10" cy="10" r="7.5"/><path d="M10 2.5a7.5 7.5 0 0 0 0 15z" fill="currentColor"/>'),
+  planned: S('<circle cx="10" cy="10" r="7.5" stroke-dasharray="3 2.6"/>'),
+  blocked: S('<path d="M7 2.8h6l4.2 4.2v6L13 17.2H7L2.8 13V7z"/><path d="M6.8 10h6.4"/>'),
+  unavailable: S('<circle cx="10" cy="10" r="7.5"/><path d="M4.8 15.2l10.4-10.4"/>'),
+  unverified: S('<circle cx="10" cy="10" r="7.5"/><path d="M7.9 8a2.2 2.2 0 1 1 3.3 1.9c-.8.5-1.2.9-1.2 1.8"/><circle cx="10" cy="14" r=".6" fill="currentColor"/>'),
+  failed: S('<circle cx="10" cy="10" r="7.5" fill="currentColor" fill-opacity=".18"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6"/>'),
+  neutral: S('<circle cx="10" cy="10" r="2"/>'),
+  info: S('<circle cx="10" cy="10" r="7.5"/><path d="M10 9v5"/><circle cx="10" cy="6.4" r=".7" fill="currentColor"/>'),
+  warn: S('<path d="M10 3l8 14H2z"/><path d="M10 8.2v4"/><circle cx="10" cy="14.6" r=".6" fill="currentColor"/>'),
+  arrow: S('<path d="M4 10h11M11 5.5L15.5 10 11 14.5"/>'),
+  back: S('<path d="M16 10H5M9 5.5L4.5 10 9 14.5"/>'),
+  menu: S('<path d="M3.5 6h13M3.5 10h13M3.5 14h13"/>'),
+  overview: S('<rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/>'),
+  explorer: S('<path d="M2.8 14.5l4-3.5 3.2 2 3.5-6 3.7 4.5"/><path d="M2.8 17.2h14.4" stroke-opacity=".5"/>'),
+  evaluation: S('<path d="M4 16V9M10 16V4M16 16v-5"/>'),
+  data: S('<ellipse cx="10" cy="5" rx="6.5" ry="2.4"/><path d="M3.5 5v10c0 1.3 2.9 2.4 6.5 2.4s6.5-1.1 6.5-2.4V5"/><path d="M3.5 10c0 1.3 2.9 2.4 6.5 2.4s6.5-1.1 6.5-2.4"/>'),
+  flask: S('<path d="M8 3h4M8.6 3v5.4L4 16.2c-.5.9.1 1.8 1.1 1.8h9.8c1 0 1.6-.9 1.1-1.8L11.4 8.4V3"/>'),
+  box: S('<path d="M10 2.8l6.8 3.6v7.2L10 17.2l-6.8-3.6V6.4z"/><path d="M3.4 6.5L10 10l6.6-3.5M10 10v7"/>'),
+  book: S('<path d="M3 4.5C5.5 3.6 8 3.8 10 5.4c2-1.6 4.5-1.8 7-.9v11c-2.5-.9-5-.7-7 .9-2-1.6-4.5-1.8-7-.9z"/><path d="M10 5.4v11"/>'),
+  dot: S('<circle cx="10" cy="10" r="2"/>'),
+};
+const STATE = {
+  completed: ["completed", "Completed"], progress: ["progress", "In progress"], planned: ["planned", "Planned"],
+  blocked: ["blocked", "Blocked"], unavailable: ["unavailable", "Unavailable"], unverified: ["unverified", "Unverified"],
+  failed: ["failed", "Failed"], closed: ["neutral", "Closed"], measured: ["completed", "Measured"], notpursued: ["neutral", "Not pursued"],
+  neutral: ["neutral", ""],
+};
+function chip(state, label) { const [cls, def] = STATE[state] || ["neutral", state]; return h("span", { class: "chip " + cls }, ico(cls), label || def); }
+function src(kind, title) {
+  const t = { doc: "Documented", live: "Stored run data", none: "Not connected" }[kind];
+  return h("span", { class: "src " + (kind === "live" ? "live" : ""), title: title || "" }, h("i"), t);
+}
+const live = msg => { const el = $("#live"); el.textContent = ""; setTimeout(() => { el.textContent = msg; }, 30); };
+
+/* ---------- number formatting: IV is decimal in the API; shown in vol points (decimal x 100) ---------- */
+const fv = (v, d = 2) => (v == null || !isFinite(v)) ? "—" : (v * 100).toFixed(d);
+const fi = n => (n == null || !isFinite(n)) ? "—" : Number(n).toLocaleString("en-US");
+const fk = k => (k >= 0 ? "+" : "−") + Math.abs(k).toFixed(2);
+const fdiff = v => (v == null || !isFinite(v)) ? "—" : ((v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(2));
+const STATUS = { 0: ["missing", "Missing"], 1: ["interpolated_T", "Interpolated in tenor"], 2: ["interpolated_k", "Interpolated in strike"], 3: ["observed", "Observed"] };
+
+/* ---------- API layer: only the implemented read-only GET routes ---------- */
+const cache = new Map();
+function api(path) {
+  if (cache.has(path)) return cache.get(path);
+  const p = fetch(path, { headers: { accept: "application/json" } }).then(async r => {
+    let body = null; try { body = await r.json(); } catch (_) { /* not JSON */ }
+    if (!r.ok) { const e = new Error((body && body.error) || ("HTTP " + r.status)); e.status = r.status; throw e; }
+    return body;
+  });
+  cache.set(path, p); p.catch(() => cache.delete(path));
+  return p;
+}
+const U = encodeURIComponent;
+const isGrid = (a, rows, cols) => Array.isArray(a) && a.length === rows && a.every(r => Array.isArray(r) && r.length === cols);
+function checkSurface(d) {
+  const T = d && d.tenor_days, K = d && d.k_nodes;
+  if (!Array.isArray(T) || !Array.isArray(K) || !T.length || !K.length) throw new Error("invalid surface: axes missing");
+  const grids = [d.status, d.iv, d.actual, d.forecast, d.difference].filter(g => g !== undefined);
+  if (!grids.length || d.status === undefined) throw new Error("invalid surface: status missing");
+  for (const g of grids) if (!isGrid(g, T.length, K.length)) throw new Error("invalid surface: grid shape does not match axes");
+  return d;
+}
+const conn = { state: "checking", runs: [], err: "" };
+let connectP = null;
+function connect(force) {
+  if (force) cache.clear();
+  conn.state = "checking";
+  connectP = api("/api/runs").then(r => { if (!Array.isArray(r)) throw new Error("unexpected response"); conn.runs = r; conn.state = "connected"; conn.err = ""; })
+    .catch(e => { conn.runs = []; conn.state = "down"; conn.err = e.message || String(e); });
+  return connectP;
+}
+const connected = () => connectP || connect();
+
+/* ---------- documented content: snapshots of project documents, each with its source ---------- */
+const ASOF = "2026-10-16";
+const D = {
+  e1src: "docs/research/E1_RESULTS.md",
+  pooled: [["Persistence", 2.569, 1.351, 0, true], ["PCA-ridge", 2.502, 1.330, 0.051], ["Ridge", 2.588, 1.411, -0.015], ["GRU ensemble", 2.666, 1.380, -0.077], ["MLP ensemble", 2.822, 1.406, -0.207], ["Rolling mean", 5.016, 2.776, -2.814]],
+  pooledN: "n = 36,793 cells over 1,954 origin days, 8 test years, 2016 to 2023. One-day horizon.",
+  byTenor: [[7, 3.734, 3.648, 3.865, 9009], [14, 2.597, 2.509, 2.682, 11115], [30, 1.765, 1.727, 1.847, 10268], [60, 1.916, 1.902, 2.102, 1900], [91, 0.902, 0.831, 0.919, 2287], [182, 0.790, 0.780, 0.855, 2214]],
+  notConcluded: ["That neural networks cannot forecast implied-volatility surfaces.", "That PCA-ridge is better than persistence in any statistical sense.", "Any trading, hedging or profit value."],
+  metricStatus: [["RMSE", "measured"], ["MAE", "measured"], ["Skill versus persistence", "measured"], ["Error by tenor", "measured"], ["Error by moneyness", "measured"], ["Error by volatility regime", "measured"], ["Calibration diagnostics (no intervals by design)", "unavailable"], ["Statistical significance", "notpursued"]],
+  removed: [["Maturity outside 2 to 400 days", 1602997], ["Strike far from spot", 819068], ["No usable side", 9168], ["No parity forward", 628], ["Log-moneyness beyond 0.30", 751586], ["Missing or zero bid", 589464], ["Crossed or locked quote", 253849], ["Mid price below $0.05", 494696], ["Relative spread above 35%", 128075]],
+  mix: [["Observed", 26.2, "s3"], ["Interpolated in tenor", 54.2, "s1"], ["Interpolated in strike", 1.6, "s2"], ["Missing", 18.0, "s0"]],
+  caps: [
+    ["Surface construction", "Quote validation, parity forward and implied-volatility inversion.", "completed"],
+    ["Per-cell surface status", "Every cell is observed, interpolated or missing, and never extrapolated.", "completed"],
+    ["Baseline and neural forecasts", "Evaluated walk-forward against simple baselines.", "completed"],
+    ["Leakage audit", "Checks that features use only information available at the forecast date.", "completed"],
+    ["Static-arbitrage flags", "Calendar and butterfly checks. Necessary conditions only.", "progress"],
+    ["Two-dimensional surface viewer", "Table and heatmap of a stored run, with forecast comparison, shown locally.", "completed"],
+    ["Surface explorer", "Inspect a stored run as a heatmap or table; every cell shows how it was obtained.", "completed"],
+    ["Experiment history view", "Planned.", "planned"],
+  ],
+  flow: [["Data acquisition", "Completed (historical, withdrawn dataset)", "completed"], ["Validation", "Completed", "completed"], ["Implied-volatility inversion", "Completed", "completed"], ["Surface construction", "Completed", "completed"], ["Feature extraction", "Completed", "completed"], ["Model training and evaluation", "Completed, descriptive", "completed"], ["Surface viewer", "Completed, stored runs", "completed"], ["Licensed data acquisition", "Blocked", "blocked"]],
+  experiments: [
+    ["E-1 Hosted-data experiment (historical)", "2026-10-13", "completed", "Descriptive results only. Dataset withdrawn 2026-10-20 (DEC-002); kept as a historical note."],
+    ["E-2 Fixed-expiry label comparison (historical)", "2026-10-13", "completed", "Tested one hypothesis from E-1. Not supported."],
+    ["Phase 0 synthetic spike", "Phase 0", "completed", "Synthetic data only."],
+    ["Phase 0 inference audit", "2026-10-13", "closed", "Statistical-method search stopped. No inference claims."],
+    ["Neural models on licensed data", "—", "unavailable", "No licensed data available."],
+  ],
+  e1cfg: [["Test design", "8 expanding-window test years, 2016 to 2023"], ["Horizon", "One trading day"], ["Seeds", "3"], ["Hyperparameters", "Fixed in advance"], ["Compute", "T4 GPU"], ["Neural training", "48 trainings in 43 seconds"], ["Whole notebook", "150 seconds"], ["Run id", "not shown (historical record)"], ["Configuration hash", "eaa46df0", true]],
+  notebooks: ["notebooks/Neural_Volatility_Surface_Colab.ipynb", "notebooks/Neural_Volatility_Surface_E2_FixedExpiry.ipynb"],
+  limits: [
+    ["L-01", "Not investment advice and not a trading system. Forecasts are uncertain."],
+    ["L-02", "Implied volatility is inferred from a model and its inputs; it is not observed."],
+    ["L-05", "Surfaces are sparse; interpolation adds structure that is not market data."],
+    ["L-10", "Historical backtests are not prospective evidence."],
+    ["L-15", "Surface views are 2D only (heatmap and table); the 3D view was removed (DEC-008)."],
+    ["L-22", "No statistical-inference method for model-versus-baseline comparisons has been validated; the search was closed on 2026-10-13. No significance or coverage claim is made."],
+    ["L-23", "SPY options are American-style but implied volatility is computed with European Black-76 on out-of-the-money mid prices; forward and discount are implied from put-call parity. Level bias is possible."],
+    ["L-24", "One underlying (SPY), one vendor, one daily snapshot. That hosted dataset was withdrawn on 2026-10-20 (DEC-002) and its upstream licence was never verified; historical backtest only."],
+    ["L-25", "Fixed a-priori hyperparameters, 3 seeds, 1-day horizon, 54 cells; comparisons are descriptive; the primary metric uses observed target cells only."],
+    ["L-26", "The nearest-expiry and same-expiry labels measure different quantities and give different rankings; neither is established as the right target."],
+  ],
+  docsList: [
+    ["Research", [["docs/research/RESEARCH_METHODOLOGY.md", "Research methodology"], ["docs/research/SURFACE_CONSTRUCTION.md", "Surface construction"], ["docs/research/IV_METHODOLOGY.md", "Implied-volatility methodology"], ["docs/research/EVALUATION_PROTOCOL.md", "Evaluation protocol"], ["docs/research/FORECASTING_STRATEGY.md", "Forecasting strategy"], ["docs/research/UNCERTAINTY_AND_CALIBRATION.md", "Uncertainty and calibration"], ["docs/research/KNOWN_LIMITATIONS.md", "Known limitations"], ["docs/research/E1_RESULTS.md", "Experiment E-1 results (historical)"], ["docs/research/E2_FIXED_EXPIRY_RESULTS.md", "Experiment E-2 results (historical)"], ["docs/research/PHASE0_CLOSURE_RECORD.md", "Phase 0 closure record"]]],
+    ["Data", [["docs/data/DATA_DICTIONARY.md", "Data dictionary"], ["docs/data/DATA_SOURCE_ASSESSMENT.md", "Data source assessment"], ["docs/data/HOSTED_DATASET_ASSESSMENT.md", "Hosted dataset assessment"], ["docs/data/DATA_GOVERNANCE.md", "Data governance"], ["docs/data/QUOTE_QUALITY_POLICY.md", "Quote quality policy"]]],
+    ["Engineering and design", [["docs/engineering/IMPLEMENTATION_MATRIX.md", "Implementation matrix"], ["docs/engineering/TESTING_STRATEGY.md", "Testing strategy"], ["docs/design/ACCESSIBILITY.md", "Accessibility"], ["dashboard-design/README.md", "Dashboard design (this interface)"], ["dashboard-design/MODEL_HANDOFF.md", "Model handoff contract"]]],
+  ],
+};
+
+/* ---------- routing ---------- */
+const NAV = [
+  ["overview", "Overview", "overview"], ["explorer", "Surface Explorer", "explorer"], ["evaluation", "Evaluation", "evaluation"],
+  ["data", "Data & Provenance", "data"], ["experiments", "Experiments & Pipeline", "flask"], ["artifacts", "Artifacts", "box"],
+  ["methodology", "Methodology & Documentation", "book"],
+];
+const TITLES = { overview: "Research overview", explorer: "Surface Explorer", evaluation: "Evaluation", data: "Data & Provenance", experiments: "Experiments & Pipeline", artifacts: "Artifacts", methodology: "Methodology & Documentation" };
+function parseHash() {
+  const raw = location.hash.replace(/^#/, "") || "/";
+  const [path, qs] = raw.split("?");
+  const seg = path.split("/").filter(Boolean);
+  const q = Object.fromEntries(new URLSearchParams(qs || ""));
+  if (seg[0] === "workbench") { const p = seg[1] && TITLES[seg[1]] ? seg[1] : "overview"; return { page: p, sub: seg[2] || "", q }; }
+  return { page: "landing", sub: "", q };
+}
+function href(page, q, sub) {
+  const base = page === "landing" ? "#/" : "#/workbench/" + page + (sub ? "/" + sub : "");
+  const qs = q ? new URLSearchParams(Object.entries(q).filter(([, v]) => v != null && v !== "")).toString() : "";
+  return base + (qs ? "?" + qs : "");
+}
+const sel = { runId: null, i: null, view: null, model: null, j: null, c: null, table: null };
+function readSel(q) {
+  if (q.run) sel.runId = q.run;
+  if (q.i != null && /^\d+$/.test(q.i)) sel.i = +q.i;
+  if (q.view) sel.view = q.view;
+  if (q.model) sel.model = q.model;
+  if (q.j != null && /^\d+$/.test(q.j)) sel.j = +q.j;
+  if (q.c != null && /^\d+$/.test(q.c)) sel.c = +q.c;
+  if (q.table) sel.table = q.table;
+}
+const selQ = keys => Object.fromEntries(keys.map(k => [k === "run" ? "run" : k, k === "run" ? sel.runId : sel[k]]));
+function syncHash(page, keys) { const nh = href(page, selQ(keys)); if (location.hash !== nh) history.replaceState(null, "", nh); }
+
+/* ---------- reveal on scroll (landing only; content is visible without script) ---------- */
+let io = null;
+function reveal(root) {
+  if (io) io.disconnect();
+  const els = root.querySelectorAll(".reveal");
+  if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) { els.forEach(e => e.classList.add("in")); return; }
+  io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -6% 0px" });
+  els.forEach(e => io.observe(e));
+}
+
+/* ---------- reusable view pieces ---------- */
+const panel = (title, kids, o = {}) => h("section", { class: "panel", "aria-labelledby": o.id }, h("header", null, h("h2", { id: o.id }, title), o.right), kids, o.foot ? h("p", { class: "foot" }, o.foot) : null);
+function stateBox(kind, title, text, action) {
+  const k = { empty: ["info", ""], error: ["failed", "error"], unavailable: ["unavailable", ""], warn: ["warn", "warn"] }[kind];
+  return h("div", { class: "state " + k[1], role: kind === "error" ? "alert" : null }, h("div", { class: "row", style: "gap:8px;flex-wrap:nowrap" }, ico(k[0]), h("h3", { text: title })), text ? h("p", { text }) : null, action);
+}
+const skeleton = (n = 3, hgt = 22) => h("div", { "aria-busy": "true", "aria-label": "Loading" }, Array.from({ length: n }, (_, i) => h("div", { class: "skel", style: `height:${hgt}px;margin:${i ? 12 : 0}px 0 0;width:${100 - i * 9}%` })));
+const retry = fn => h("button", { class: "btn bsec sm", type: "button", onclick: fn }, "Retry");
+function ledgerCheck(l) { if (!l || typeof l.rows_in !== "number") return null; const rej = Object.values(l.rejects || {}).reduce((a, b) => a + b, 0); return { rej, ok: l.rows_in === l.kept + rej }; }
+const kvList = rows => h("dl", { class: "kv" }, rows.map(r => [h("dt", { text: r[0] }), h("dd", null, r[2] ? h("span", { class: "mono" }, r[1]) : r[1])]));
+function dataTable(cols, rows, o = {}) {
+  const nm = i => o.num && o.num.includes(i) ? "n" : "";
+  return h("div", { class: "tablewrap" }, h("table", { class: "t" }, o.caption ? h("caption", { text: o.caption }) : null,
+    h("thead", null, h("tr", null, cols.map((c, i) => h("th", { scope: "col", class: nm(i) }, c)))),
+    h("tbody", null, rows.map(r => h("tr", null, r.map((c, i) => h("td", { class: nm(i) }, c)))))));
+}
+
+/* ---------- heatmap (HTML grid so text stays readable on every screen; status = colour AND pattern) ---------- */
+const SC_LO = [27, 58, 85], SC_HI = [143, 208, 240];
+const mixc = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
+const lumi = ([r, g, b]) => { const f = c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
+const levelRGB = t => mixc(SC_LO, SC_HI, Math.min(1, Math.max(0, t)));
+const divRGB = t => t < 0 ? mixc([27, 34, 44], [90, 169, 230], Math.min(1, -t)) : mixc([27, 34, 44], [232, 146, 74], Math.min(1, t));
+function paintCell(el, rgb, status) {
+  const light = lumi(rgb) > .3;
+  el.style.backgroundColor = `rgb(${rgb})`; el.style.color = light ? "#0c1016" : "#e6ebf2";
+  const line = light ? "rgba(12,16,22,.42)" : "rgba(230,235,242,.5)";
+  if (status === 1) el.style.backgroundImage = `repeating-linear-gradient(135deg,${line} 0 1.5px,transparent 1.5px 6px)`;
+  else if (status === 2) { el.style.backgroundImage = `radial-gradient(circle,${line} 1.3px,transparent 1.7px)`; el.style.backgroundSize = "7px 7px"; }
+}
+function surfaceRange(...grids) { let lo = Infinity, hi = -Infinity; for (const g of grids) for (const r of g) for (const v of r) if (v != null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } return lo === Infinity ? null : [lo, hi === lo ? lo + 1e-9 : hi]; }
+/* o: {tenors,ks,vals,status,mode:'level'|'diff',range,sm,sel:{j,c},onSelect,label,keep}; keep = show values where status is missing (forecast) */
+function heatmap(o) {
+  const nK = o.ks.length, el = h("div", { class: "heat" + (o.sm ? " sm" : ""), role: "grid", "aria-label": o.label, style: `grid-template-columns:52px repeat(${nK},minmax(40px,1fr))` });
+  el.append(h("div", { class: "hh", role: "columnheader", "aria-label": "Tenor in days" }));
+  o.ks.forEach(k => el.append(h("div", { class: "hh", role: "columnheader", text: fk(k) })));
+  const cells = [];
+  o.tenors.forEach((T, j) => {
+    el.append(h("div", { class: "hh", role: "rowheader", text: T + "d" }));
+    o.ks.forEach((k, c) => {
+      const st = o.status[j][c], v = o.vals[j][c], miss = v == null || !isFinite(v) || (st === 0 && !o.keep);
+      const b = h("button", { type: "button", class: "hc" + (miss ? " miss" : ""), role: "gridcell", "data-j": j, "data-c": c, tabindex: -1, "aria-label": `Tenor ${T} days, log-moneyness ${fk(k)}, ` + (miss ? "missing" : `${o.mode === "diff" ? "difference " + fdiff(v) : "implied volatility " + fv(v)} vol points, ${STATUS[st][1].toLowerCase()}`), disabled: o.onSelect ? null : true });
+      if (miss) b.textContent = "—";
+      else {
+        b.textContent = o.mode === "diff" ? fdiff(v) : fv(v, 1);
+        const rng = o.range;
+        paintCell(b, o.mode === "diff" ? divRGB(rng ? v / rng[1] : 0) : levelRGB(rng ? (v - rng[0]) / (rng[1] - rng[0]) : .5), st);
+      }
+      if (o.sel && o.sel.j === j && o.sel.c === c) b.classList.add("sel");
+      if (o.onSelect) b.addEventListener("click", () => o.onSelect(j, c));
+      el.append(b); cells.push(b);
+    });
+  });
+  if (o.onSelect) {
+    const first = (o.sel && cells.find(b => +b.dataset.j === o.sel.j && +b.dataset.c === o.sel.c)) || cells.find(b => !b.classList.contains("miss")) || cells[0];
+    if (first) first.tabIndex = 0;
+    el.addEventListener("keydown", e => {
+      const t = e.target.closest(".hc"); if (!t) return;
+      const d = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key]; if (!d) return; e.preventDefault();
+      const j = Math.max(0, Math.min(o.tenors.length - 1, +t.dataset.j + d[0])), c = Math.max(0, Math.min(nK - 1, +t.dataset.c + d[1]));
+      o.onSelect(j, c, true);
+      const n = $(`.hc[data-j="${j}"][data-c="${c}"]`, el); if (n) { cells.forEach(x => x.tabIndex = -1); n.tabIndex = 0; n.focus(); }
+    });
+  }
+  return el;
+}
+const legend4 = () => h("div", { class: "legend", role: "list", "aria-label": "Cell status legend" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", { role: "listitem" }, h("i", { class: "sw s" + s }), t)));
+
+/* ---------- slices: SVG line charts; status by marker (filled = observed, hollow = interpolated, dashed = interpolated segment) ---------- */
+function sliceChart(o) { // o: {xs, xt, xlabel, ys, status, fc, aria}
+  const W = 520, Hh = 230, m = { l: 52, r: 14, t: 14, b: 44 }, ns = "http://www.w3.org/2000/svg";
+  const e = (t, a) => { const n = document.createElementNS(ns, t); for (const [k, v] of Object.entries(a || {})) n.setAttribute(k, v); return n; };
+  const svg = e("svg", { viewBox: `0 0 ${W} ${Hh}`, role: "img", "aria-label": o.aria });
+  const vals = [...o.ys, ...(o.fc || [])].filter(v => v != null && isFinite(v));
+  if (!vals.length) return null;
+  let lo = Math.min(...vals), hi = Math.max(...vals); if (hi - lo < 1e-9) { lo -= .005; hi += .005; } const pad = (hi - lo) * .12; lo -= pad; hi += pad;
+  const X = i => m.l + (o.xs.length === 1 ? (W - m.l - m.r) / 2 : i * (W - m.l - m.r) / (o.xs.length - 1)), Y = v => m.t + (hi - v) / (hi - lo) * (Hh - m.t - m.b);
+  for (let g = 0; g <= 3; g++) { const v = lo + (hi - lo) * g / 3, y = Y(v); svg.append(e("line", { x1: m.l, x2: W - m.r, y1: y, y2: y, stroke: "var(--line)", "stroke-width": 1, opacity: .6 })); const t = e("text", { x: m.l - 8, y: y + 4, "text-anchor": "end" }); t.textContent = fv(v, 1); svg.append(t); }
+  o.xs.forEach((x, i) => { const t = e("text", { x: X(i), y: Hh - m.b + 18, "text-anchor": "middle" }); t.textContent = o.xt(x); svg.append(t); });
+  const lab = e("text", { x: (W + m.l) / 2, y: Hh - 6, "text-anchor": "middle" }); lab.textContent = o.xlabel; svg.append(lab);
+  const yl = e("text", { x: 12, y: Hh / 2 - 10, transform: `rotate(-90 12 ${Hh / 2 - 10})`, "text-anchor": "middle" }); yl.textContent = "IV (vol points)"; svg.append(yl);
+  const series = (ys, stat, col, dash) => {
+    for (let i = 0; i < ys.length - 1; i++) { if (ys[i] == null || ys[i + 1] == null) continue; const interp = stat && (stat[i] !== 3 || stat[i + 1] !== 3); svg.append(e("line", { x1: X(i), y1: Y(ys[i]), x2: X(i + 1), y2: Y(ys[i + 1]), stroke: col, "stroke-width": 2, "stroke-dasharray": dash || (interp ? "5 4" : "none") })); }
+    ys.forEach((v, i) => { if (v == null) return; const obs = !stat || stat[i] === 3; svg.append(e("circle", { cx: X(i), cy: Y(v), r: 4.5, fill: obs ? col : "var(--s1)", stroke: col, "stroke-width": 2 })); });
+  };
+  series(o.ys, o.status, "var(--accent)");
+  if (o.fc) series(o.fc, null, "#e8924a", "2 4");
+  return svg;
+}
+
+/* ---------- shell ---------- */
+let renderTok = 0, teardown = [];
+function cleanup() { teardown.forEach(f => { try { f(); } catch (_) { /* ignore */ } }); teardown = []; }
+const app = () => $("#app");
+function ctxBar() {
+  const run = conn.runs.find(r => r.id === sel.runId) || (conn.state === "connected" && conn.runs[0] && !sel.runId ? null : null);
+  const origin = conn.state !== "connected" || !run ? "not loaded" : run.origin;
+  return h("div", { class: "ctx" },
+    h("span", null, "Run: ", run ? h("b", { class: "mono", title: run.id }, run.id.slice(0, 8)) : h("b", { text: "none selected" })),
+    h("span", null, "Data origin: ", h("b", { text: origin }), origin === "unlabelled" ? [" ", chip("unverified", "Unlabelled")] : null),
+    h("span", { class: "row", style: "gap:6px;flex-wrap:nowrap" }, ico(conn.state === "connected" ? "completed" : conn.state === "checking" ? "planned" : "unavailable"), "Research API: ", h("b", { text: conn.state === "connected" ? "connected" : conn.state === "checking" ? "checking" : "not connected" })));
+}
+function runSelect(onchange) {
+  if (!conn.runs.length) return null;
+  const s = h("select", { id: "runsel" + Math.random().toString(36).slice(2, 6) }, conn.runs.map(r => h("option", { value: r.id, selected: r.id === sel.runId ? true : null }, `${r.id.slice(0, 8)} · ${r.origin}`)));
+  s.addEventListener("change", () => onchange(s.value));
+  return h("label", { class: "field" }, "Run", s);
+}
+function shell(page) {
+  const root = app(); root.replaceChildren(); cleanup();
+  document.documentElement.dataset.theme = "dark";
+  const keepRun = ["explorer", "evaluation", "artifacts"];
+  const side = h("aside", { class: "side", id: "side", "aria-label": "Workbench navigation" },
+    h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })),
+    h("nav", { "aria-label": "Workbench" }, h("ul", { class: "nav" }, NAV.map(([id, label, ic]) => h("li", null, h("a", { href: href(id, keepRun.includes(id) ? { run: sel.runId } : null), "aria-current": id === page ? "page" : null }, ico(ic), label))))),
+    h("a", { class: "homelink", href: "#/" }, ico("back"), "Back to home"));
+  const bg = h("div", { class: "drawerbg", id: "dbg" });
+  const menuBtn = h("button", { class: "btn bsec sm", type: "button", "aria-expanded": "false", "aria-controls": "side" }, ico("menu"), "Menu");
+  const setDrawer = open => { side.classList.toggle("open", open); bg.classList.toggle("open", open); menuBtn.setAttribute("aria-expanded", String(open)); if (open) $("a", side).focus(); else menuBtn.focus(); };
+  menuBtn.addEventListener("click", () => setDrawer(!side.classList.contains("open")));
+  bg.addEventListener("click", () => setDrawer(false));
+  side.addEventListener("click", e => { if (e.target.closest("a")) { side.classList.remove("open"); bg.classList.remove("open"); menuBtn.setAttribute("aria-expanded", "false"); } });
+  const esc = e => { if (e.key === "Escape" && side.classList.contains("open")) setDrawer(false); };
+  document.addEventListener("keydown", esc); teardown.push(() => document.removeEventListener("keydown", esc));
+  const main = h("main", { class: "main", id: "main" },
+    h("div", { class: "mbar" }, menuBtn, h("b", { text: "Neural Volatility Surface" })),
+    h("div", { class: "top" }, h("h1", { id: "pt", tabindex: -1, text: TITLES[page] }), ctxBar()));
+  root.append(h("div", { class: "wb" }, side, main), bg);
+  return main;
+}
+const lede = (main, text) => main.append(h("p", { class: "lede", text }));
+
+/* ---------- run helpers ---------- */
+async function ensureRun() {
+  if (conn.state !== "connected" || !conn.runs.length) return null;
+  if (!sel.runId || !conn.runs.some(r => r.id === sel.runId)) { sel.runId = conn.runs[0].id; sel.i = null; sel.model = null; sel.j = null; sel.c = null; }
+  try {
+    const info = await api("/api/runs/" + U(sel.runId));
+    if (!info || !Array.isArray(info.dates) || !Array.isArray(info.tenor_days) || !Array.isArray(info.k_nodes) || !Array.isArray(info.tables) || !Array.isArray(info.forecasts)) throw new Error("invalid run description");
+    return info;
+  } catch (e) { return { error: e.message || String(e) }; }
+}
+function needRun(main, info) {
+  if (conn.state !== "connected") { main.append(stateBox("unavailable", "Not connected", "The research API did not respond (" + conn.err + "). Start it with python -m volatility_lab.api.server --root <runs directory>, then retry.", retry(async () => { await connect(true); route(); }))); return true; }
+  if (!conn.runs.length) { main.append(stateBox("empty", "No run is loaded", "The research API lists no runs. A run directory needs a panel.npz; scripts/make_synthetic_run.py creates a labelled synthetic one.")); return true; }
+  if (!info || info.error) { main.append(stateBox("error", "Could not load this run", info ? info.error : "unknown error", retry(() => { cache.clear(); route(); }))); return true; }
+  return false;
+}
+function originBanner(origin, desc) {
+  const t = { synthetic: "SYNTHETIC data. Not market data. Nothing here is evidence about real markets.", real: "Real data (hosted, upstream licence unverified). Backtest only. Descriptive; not a trading result.", unlabelled: "UNLABELLED run. Its origin is unknown. Do not treat it as real or synthetic." }[origin] || origin;
+  return h("div", { class: "banner" + (origin === "unlabelled" ? "" : " info"), role: "status" }, ico(origin === "unlabelled" ? "warn" : "info"), h("div", null, t, desc && origin !== "synthetic" ? h("span", { class: "muted" }, " ", desc) : null));
+}
+
+/* ---------- pages: overview ---------- */
+async function pageOverview(main, tok) {
+  lede(main, "Where the project stands, what data and results exist, and what to inspect next.");
+  main.append(h("div", { class: "row", style: "margin:-8px 0 20px;gap:8px 16px" }, src("doc"), h("span", { class: "muted", style: "font-size:13px" }, "read from project documentation"), src("live"), h("span", { class: "muted", style: "font-size:13px" }, "read from a run")));
+  const qa = (q, a, st) => h("div", { class: "qa" }, h("div", { class: "q", text: q }), h("div", null, a), h("div", { class: "rt" }, st, src("doc")));
+  const status = h("div", null,
+    qa("What is the state of the research?", "Phase 0 is incomplete. Real-data feasibility with licensed sources is pending.", chip("progress")),
+    qa("Which capabilities are implemented?", [h("p", null, "Surface construction, baselines, neural models, leakage audit, surface viewer."), h("p", { class: "muted", style: "margin-top:6px" }, "Experiment history view: Planned.")], chip("completed")),
+    qa("Is usable data available?", "No real market dataset is authorized for display. The earlier hosted dataset was withdrawn on 2026-10-20 (DEC-002); synthetic demo runs only.", chip("unavailable")),
+    qa("Is a model result available?", "Experiment E-1 (historical, withdrawn dataset) is recorded with descriptive results only.", chip("completed")),
+    qa("Has the result been validated?", "No. No significance, calibration or trading claim is made.", chip("unverified")),
+    qa("What blocks progress?", "Real-data feasibility with a licensed provider. Provider terms, pricing and a permitted sample have not been obtained.", chip("blocked")),
+    h("div", { class: "qa" }, h("div", { class: "q", text: "What should I inspect next?" }), h("div", { class: "row", style: "gap:8px 24px" }, h("a", { class: "link", href: href("explorer", { run: sel.runId }) }, "Open Surface Explorer", ico("arrow")), h("a", { class: "link", href: href("evaluation", { run: sel.runId }) }, "Review Evaluation", ico("arrow"))), h("div")));
+  const e1 = panel("Historical record: E-1 (dataset withdrawn)", [kvList([["Data", "Withdrawn hosted dataset (DEC-002)"], ["Coverage", "2010-01-04 to 2023-12-29"], ["Surface dates", "3,500"], ["Test years", "2016 to 2023"], ["Run date", "2026-10-13, reproduced 2026-10-16"]]), h("p", { style: "margin-top:16px" }, h("a", { class: "link", href: href("evaluation") }, "Read E-1 figures", ico("arrow")))], { id: "e1", right: src("doc", D.e1src), foot: "Source: " + D.e1src + " §1, §2, §7" });
+  const art = panel("Available artifacts", skeleton(2), { id: "art", right: src(conn.state === "connected" ? "live" : "none") });
+  main.append(h("div", { class: "grid2", style: "align-items:start" }, panel("Status at a glance", status, { id: "glance" }), h("div", { class: "stack" }, e1, art)));
+  main.append(h("div", { style: "margin-top:24px" }, panel("Research pipeline", h("div", { class: "pipe" }, D.flow.map(([n, s, st]) => h("div", { class: "node " + st }, h("div", { class: "nh" }, h("span", { class: "nm", text: n }), ico(STATE[st][0])), h("span", { class: "ns", text: s })))), { id: "pipe", right: src("doc"), foot: "Source: docs/engineering/IMPLEMENTATION_MATRIX.md §6 to §8" })));
+  await connected(); if (tok !== renderTok) return;
+  art.replaceChildren(h("header", null, h("h2", { id: "art", text: "Available artifacts" }), src(conn.state === "connected" ? "live" : "none")));
+  if (conn.state !== "connected") { art.append(stateBox("unavailable", "Not connected", "The research API did not respond (" + conn.err + "). Artifacts appear here when it lists a run.", retry(async () => { await connect(true); route(); }))); return; }
+  if (!conn.runs.length) { art.append(stateBox("empty", "No run is loaded", "The research API lists no runs. Generate a synthetic run with scripts/make_synthetic_run.py or point the server at a runs directory.")); return; }
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  if (!info || info.error) { art.append(stateBox("error", "Could not load this run", info ? info.error : "unknown")); return; }
+  art.append(kvList([["Runs listed", String(conn.runs.length)], ["Selected run", [h("span", { class: "mono" }, sel.runId.slice(0, 12)), " ", chip("neutral", info.origin)]], ["Surface dates", fi(info.dates.length)], ["Result tables", info.tables.length ? info.tables.join(", ") : "none"], ["Stored forecasts", info.forecasts.length ? info.forecasts.join(", ") : "none"], ["Manifest", info.lineage ? "present" : "not stored"]]), h("p", { style: "margin-top:16px" }, h("a", { class: "link", href: href("artifacts", { run: sel.runId }) }, "All artifacts", ico("arrow"))));
+}
+
+/* ---------- pages: explorer ---------- */
+async function pageExplorer(main, tok) {
+  lede(main, "Inspect one stored surface as a heatmap or table; every cell shows how it was obtained.");
+  await connected(); if (tok !== renderTok) return;
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  if (needRun(main, info)) return;
+  const N = info.dates.length;
+  if (N < 1) { main.append(stateBox("empty", "This run has no dates", "The panel contains no surfaces.")); return; }
+  if (sel.i == null || sel.i >= N) sel.i = N - 1;
+  if (!["heatmap", "table"].includes(sel.view)) sel.view = "heatmap";
+  if (sel.model && !info.forecasts.includes(sel.model)) sel.model = null;
+  if (!sel.model && info.forecasts.length) sel.model = info.forecasts[0];
+  main.append(originBanner(info.origin, info.description));
+  const dateLab = h("span", { class: "ink2", "aria-live": "polite" });
+  const slider = h("input", { type: "range", id: "dsl", min: 0, max: N - 1, value: sel.i });
+  const prev = h("button", { class: "btn bsec sm", type: "button", "aria-label": "Previous date" }, ico("back")), next = h("button", { class: "btn bsec sm", type: "button", "aria-label": "Next date" }, ico("arrow"));
+  const modelSel = h("select", { id: "msel" }, info.forecasts.length ? info.forecasts.map(m => h("option", { value: m, selected: m === sel.model ? true : null }, m)) : h("option", { value: "" }, "None loaded"));
+  if (!info.forecasts.length) modelSel.disabled = true;
+  main.append(h("div", { class: "panel", style: "margin:16px 0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px 24px;align-items:end" },
+    runSelect(id => { sel.runId = id; sel.i = null; sel.model = null; sel.j = sel.c = null; route(); }) || h("div"),
+    h("div", { class: "field", style: "grid-column:span 2" }, h("label", { for: "dsl" }, "Date"), h("div", { class: "row", style: "flex-wrap:nowrap" }, prev, slider, next), dateLab),
+    h("div", { class: "field" }, h("label", { for: "msel" }, "Forecast model"), modelSel, h("span", { text: "Units: implied volatility in vol points (decimal × 100)" }))));
+  const tabsEl = h("div", { class: "tabs", role: "tablist", "aria-label": "Surface views" });
+  const work = h("div", { id: "work", role: "tabpanel" }), inspector = h("div", { class: "stack" });
+  const lower = h("div", { class: "grid3", style: "margin-top:24px" }), lineage = h("div", { style: "margin-top:24px" });
+  main.append(h("div", { class: "grid2", style: "align-items:start" }, h("section", { class: "panel", "aria-labelledby": "wt" }, h("header", null, h("h2", { id: "wt", text: "Implied-volatility surface" }), src("live")), tabsEl, work), inspector), lower, lineage);
+  let surf = null, fc = null, fcErr = "", seq = 0;
+  teardown.push(() => { clearTimeout(timer); });
+  const KEYS = ["run", "i", "view", "model", "j", "c"];
+  function setTabs() {
+    const order = [["heatmap", "Heatmap"], ["table", "Table"]];
+    tabsEl.replaceChildren(...order.map(([v, t]) => {
+      const b = h("button", { class: "tab", type: "button", role: "tab", "aria-selected": String(sel.view === v), id: "tab-" + v, "aria-controls": "work", tabindex: sel.view === v ? 0 : -1 }, t);
+      const go = nv => { sel.view = nv; syncHash("explorer", KEYS); setTabs(); drawWork(); const nb = $("#tab-" + nv); if (nb) nb.focus(); };
+      b.addEventListener("click", () => go(v));
+      b.addEventListener("keydown", e => { const k = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (!k) return; e.preventDefault(); go(order[(order.findIndex(o => o[0] === v) + k + order.length) % order.length][0]); });
+      return b;
+    }));
+    work.setAttribute("aria-labelledby", "tab-" + sel.view);
+  }
+  const pick = (j, c, fromKey) => {
+    sel.j = j; sel.c = c; syncHash("explorer", KEYS); drawInspector();
+    live(`Tenor ${surf.tenor_days[j]} days, log-moneyness ${fk(surf.k_nodes[c])}: ` + (surf.status[j][c] === 0 ? "missing" : fv(surf.iv[j][c]) + " vol points, " + STATUS[surf.status[j][c]][1].toLowerCase()));
+    if (!fromKey && sel.view === "heatmap") { work.querySelectorAll(".hc.sel").forEach(x => x.classList.remove("sel")); const n = $(`.hc[data-j="${j}"][data-c="${c}"]`, work); if (n) { n.classList.add("sel"); work.querySelectorAll(".hc").forEach(x => x.tabIndex = -1); n.tabIndex = 0; } }
+    if (fromKey) { work.querySelectorAll(".hc.sel").forEach(x => x.classList.remove("sel")); const n = $(`.hc[data-j="${j}"][data-c="${c}"]`, work); if (n) n.classList.add("sel"); }
+  };
+  function drawWork() {
+    work.replaceChildren();
+    const rng = surfaceRange(surf.iv), vals = surf.iv;
+    if (!rng) { work.append(stateBox("unavailable", "No surface values on this date", "Every cell is missing. Missing cells are never filled or extrapolated.")); return; }
+    if (sel.view === "table") {
+      work.append(h("div", { class: "tablewrap" }, h("table", { class: "t" }, h("caption", { text: `Implied volatility in vol points, ${surf.date}. Rows: tenor in days. Columns: log-moneyness k. The status follows each value.` }),
+        h("thead", null, h("tr", null, h("th", { scope: "col", text: "Tenor (days)" }), surf.k_nodes.map(k => h("th", { scope: "col", class: "n", text: "k " + fk(k) })))),
+        h("tbody", null, surf.tenor_days.map((T, j) => h("tr", null, h("th", { scope: "row", style: "background:none;font-weight:600;color:var(--ink)", text: String(T) }), surf.k_nodes.map((k, c) => { const st = surf.status[j][c]; return h("td", { class: "n" }, st === 0 || vals[j][c] == null ? "—" : [fv(vals[j][c]), h("span", { class: "muted", style: "display:block;font-size:12px" }, ["", "interp. tenor", "interp. strike", "observed"][st])]); })))))), h("div", { style: "margin-top:12px" }, legend4()));
+      return;
+    }
+    if (sel.view === "heatmap") {
+      work.append(h("div", { class: "tablewrap" }, heatmap({ tenors: surf.tenor_days, ks: surf.k_nodes, vals, status: surf.status, mode: "level", range: rng, sel: { j: sel.j, c: sel.c }, onSelect: pick, label: "Implied volatility by tenor and log-moneyness. Arrow keys move between cells." })),
+        h("p", { class: "axis-t", text: "Rows: tenor in days. Columns: log-moneyness k. Colour: implied volatility in vol points, scaled from " + fv(rng[0], 1) + " to " + fv(rng[1], 1) + " on this date. Pattern: how the cell was obtained." }), h("div", { style: "margin-top:12px" }, legend4()));
+      return;
+    }
+  }
+  const chartLegend = f => h("div", { class: "legend", style: "margin-top:6px" }, h("span", null, h("i", { class: "sw s3", style: "border-radius:50%" }), "Observed"), h("span", null, h("i", { class: "sw", style: "border:2px solid var(--accent);border-radius:50%" }), "Interpolated (dashed line)"), f ? h("span", null, h("i", { class: "sw", style: "border:2px dotted #e8924a;border-radius:50%" }), "Forecast") : null);
+  function drawInspector() {
+    inspector.replaceChildren();
+    const j = sel.j, c = sel.c, has = j != null && c != null && surf.status[j] && surf.status[j][c] != null;
+    const st = has ? surf.status[j][c] : null, v = has && st !== 0 ? surf.iv[j][c] : null;
+    inspector.append(panel("Selected cell", [has ? kvList([["Tenor (days)", String(surf.tenor_days[j])], ["Log-moneyness k", fk(surf.k_nodes[c])], ["Implied volatility", v == null ? "—" : fv(v) + " vol points"], ["Status", STATUS[st][1]], ["Quotes behind the cell", "—"]]) : h("p", { class: "muted", text: "Select a cell in the heatmap or by arrow keys." }), h("p", { class: "foot" }, "Per-cell quote lineage is not stored, so it is not available. Usable quotes on this date: " + fi(surf.n_quotes) + ".")], { id: "sc", right: src("live") }));
+    if (has) {
+      const s1 = sliceChart({ xs: surf.k_nodes, xt: fk, xlabel: "Log-moneyness k", ys: surf.iv[j].map((x, i) => surf.status[j][i] === 0 ? null : x), status: surf.status[j], fc: fc ? fc.forecast[j] : null, aria: `Smile at tenor ${surf.tenor_days[j]} days` });
+      const s2 = sliceChart({ xs: surf.tenor_days, xt: t => t + "d", xlabel: "Tenor (days), nodes evenly spaced", ys: surf.iv.map((r, jj) => surf.status[jj][c] === 0 ? null : r[c]), status: surf.status.map(r => r[c]), fc: fc ? fc.forecast.map(r => r[c]) : null, aria: `Term structure at log-moneyness ${fk(surf.k_nodes[c])}` });
+      inspector.append(panel("Smile at selected tenor", s1 ? h("div", { class: "chart" }, s1, chartLegend(!!fc)) : stateBox("unavailable", "No data", "All cells of this tenor are missing."), { id: "sm", right: src("live") }), panel("Term structure at selected moneyness", s2 ? h("div", { class: "chart" }, s2, chartLegend(!!fc)) : stateBox("unavailable", "No data", "All cells of this moneyness are missing."), { id: "ts", right: src("live") }));
+    } else inspector.append(panel("Smile at selected tenor", stateBox("empty", "No data", "Select a cell to see this slice."), { id: "sm" }), panel("Term structure at selected moneyness", stateBox("empty", "No data", "Select a cell to see this slice."), { id: "ts" }));
+  }
+  function drawLower() {
+    lower.replaceChildren();
+    const mk = (title, kids, id, right) => panel(title, kids, { id, right });
+    const none = msg => { const u = () => stateBox("unavailable", "Not available", msg); lower.append(mk("Actual", u(), "pa"), mk("Forecast", u(), "pf"), mk("Difference (forecast minus actual)", u(), "pd")); };
+    if (!info.forecasts.length) return none("This run has no stored forecast. Forecasts appear when forecasts/<model>.npz exists in the run.");
+    if (!fc) return none(fcErr || "No forecast for this date.");
+    const r = surfaceRange(fc.actual, fc.forecast), dm = surfaceRange(fc.difference), lim = dm ? [0, Math.max(Math.abs(dm[0]), Math.abs(dm[1]), 1e-9)] : [0, 1];
+    const cell = (vals, mode, range, lab, keep) => h("div", { class: "tablewrap" }, heatmap({ tenors: fc.tenor_days, ks: fc.k_nodes, vals, status: fc.status, mode, range, sm: true, label: lab, keep }));
+    const mae = fc.mae_observed_vol_points;
+    lower.append(mk("Actual", [cell(fc.actual, "level", r, "Actual surface"), h("p", { class: "foot" }, "Target date " + fc.target_date)], "pa", src("live")),
+      mk("Forecast", [cell(fc.forecast, "level", r, "Forecast surface", true), h("p", { class: "foot" }, `Model ${fc.model}, made at origin ${fc.origin_date}, ${fc.horizon_panel_steps} panel step ahead. Backtest. Status patterns are those of the actual cell.`)], "pf", src("live")),
+      mk("Difference (forecast minus actual)", [cell(fc.difference, "diff", lim, "Difference"), h("div", { style: "margin-top:12px" }, h("div", { class: "diverge", role: "img", "aria-label": "Colour scale: blue negative, neutral zero, orange positive" }), h("div", { class: "row", style: "justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px" }, h("span", null, "Negative −" + fv(lim[1], 1)), h("span", null, "Zero"), h("span", null, "Positive +" + fv(lim[1], 1)))), h("p", { class: "foot" }, `Shown only where the actual cell is not missing: ${fi(fc.n_difference_cells)} cells. MAE on observed cells: ${mae == null ? "—" : mae.toFixed(3) + " vol points"} (n = ${fi(fc.n_observed_cells)}). Descriptive, one date, no significance.`)], "pd", src("live")));
+  }
+  function drawLineage() {
+    lineage.replaceChildren(); const g = info.lineage;
+    if (!g) { lineage.append(panel("Lineage", h("p", { class: "muted", text: "No manifest stored for this run." }), { id: "ln", right: src("none") })); return; }
+    lineage.append(panel("Lineage", [kvList([["Dataset version", g.version_id, true], ["Configuration hash", g.config_sha256, true], ["Ledgers conserved", String(g.ledgers_conserved)], ["Panel hash matches manifest", g.panel_hash_matches ? "yes" : "NO"]]), g.panel_hash_matches ? null : h("div", { class: "banner", style: "margin-top:14px", role: "alert" }, ico("warn"), "The panel hash does not match the manifest. Treat this run as unverified.")], { id: "ln", right: src("live") }));
+  }
+  const dsel = () => { dateLab.textContent = `Date ${sel.i + 1} of ${N}: ${info.dates[sel.i]}`; slider.value = sel.i; };
+  async function load() {
+    const my = ++seq; dateLab.textContent = "Loading…"; work.setAttribute("aria-busy", "true");
+    let s;
+    try { s = checkSurface(await api(`/api/runs/${U(sel.runId)}/surface/${sel.i}`)); } catch (e) { if (my !== seq || tok !== renderTok) return; work.removeAttribute("aria-busy"); work.replaceChildren(stateBox("error", "Could not load this surface", e.message, retry(() => { cache.clear(); load(); }))); return; }
+    if (my !== seq || tok !== renderTok) return;
+    let f = null, fe = "";
+    if (sel.model) { try { f = checkSurface(await api(`/api/runs/${U(sel.runId)}/forecasts/${U(sel.model)}/${sel.i}`)); } catch (e) { fe = e.status === 404 ? "No forecast of this model for this date." : e.message; } if (my !== seq || tok !== renderTok) return; }
+    surf = s; fc = f; fcErr = fe;
+    if (sel.j != null && (sel.j >= surf.tenor_days.length || sel.c >= surf.k_nodes.length)) sel.j = sel.c = null;
+    dsel(); syncHash("explorer", KEYS); work.removeAttribute("aria-busy"); setTabs(); drawWork(); drawInspector(); drawLower(); drawLineage();
+  }
+  let timer = 0; const go = i => { sel.i = Math.max(0, Math.min(N - 1, i)); dsel(); clearTimeout(timer); timer = setTimeout(load, 60); };
+  slider.addEventListener("input", () => go(+slider.value)); prev.addEventListener("click", () => go(sel.i - 1)); next.addEventListener("click", () => go(sel.i + 1));
+  modelSel.addEventListener("change", () => { sel.model = modelSel.value || null; load(); });
+  dsel(); setTabs(); work.append(skeleton(4, 36)); await load();
+}
+
+/* ---------- pages: evaluation ---------- */
+const COLN = { tenor_days: "Tenor (days)", mae_vol_points: "MAE (vol points)", n_cells: "Cells", insufficient_n: "Sample size" };
+const colName = c => COLN[c] || (c.charAt(0).toUpperCase() + c.slice(1).replace(/_/g, " "));
+function cellVal(c, v) {
+  if (c === "insufficient_n") return String(v) === "True" || v === true ? chip("unverified", "Insufficient n") : h("span", { class: "muted", text: "Sufficient" });
+  if (typeof v === "number") return Number.isInteger(v) ? fi(v) : (+v.toFixed(4)).toString();
+  return v === "" || v == null ? "—" : String(v);
+}
+async function pageEvaluation(main, tok) {
+  lede(main, "Out-of-sample, walk-forward and descriptive. No significance, calibration or trading claim is made.");
+  const liveBox = h("div", null, skeleton(3)), liveHead = h("span");
+  const livePanel = panel("Result tables of the selected run", liveBox, { id: "lt", right: liveHead });
+  const bar = (v, i) => h("span", { class: "bars" }, v === 0 ? "0" : [h("i", { class: v < 0 ? "neg" : "", style: `width:${Math.min(60, Math.max(3, Math.abs(v) * 120))}px`, "aria-hidden": "true" }), (v > 0 ? "+" : "−") + Math.abs(v).toFixed(3)]);
+  const doc = h("div", { class: "stack" },
+    h("div", { class: "banner info", role: "note" }, ico("info"), h("div", null, src("doc"), " Figures below are recorded in ", h("span", { class: "mono" }, D.e1src), ". Historical record: these come from experiments on a hosted dataset that was withdrawn on 2026-10-20 (DEC-002). They are not read from a stored run and are not to be reproduced or shown elsewhere. As of " + ASOF + ".")),
+    h("div", { class: "grid2", style: "align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))" },
+      h("div", { class: "stack" },
+        panel("Pooled error on observed cells, in vol points", [dataTable(["Model", "RMSE", "MAE", "MSE skill vs persistence"], D.pooled.map(r => [h("span", null, r[0], r[4] ? [" ", h("span", { class: "muted", style: "font-size:12px" }, "baseline")] : null), r[1].toFixed(3), r[2].toFixed(3), bar(r[3])]), { num: [1, 2, 3], caption: "Lower RMSE and MAE are better. Skill above zero means lower mean squared error than persistence." }), h("p", { class: "foot" }, D.pooledN)], { id: "pe", right: src("doc", D.e1src), foot: "Source: " + D.e1src + " §3" }),
+        panel("Not concluded", h("ul", { style: "margin:0;padding-left:20px;display:grid;gap:8px" }, D.notConcluded.map(t => h("li", { text: t }))), { id: "nc", right: src("doc"), foot: "Source: " + D.e1src + " §4" })),
+      h("div", { class: "stack" },
+        panel("Root-mean-square error by tenor, in vol points", dataTable(["Tenor (days)", "Persistence", "PCA-ridge", "GRU ensemble", "Cells"], D.byTenor.map(r => [String(r[0]), r[1].toFixed(3), r[2].toFixed(3), r[3].toFixed(3), fi(r[4])]), { num: [0, 1, 2, 3, 4] }), { id: "bt", right: src("doc"), foot: "Source: " + D.e1src + " §3 (by region)" }),
+        panel("Metric status", h("dl", { class: "stl" }, D.metricStatus.map(([n, s]) => h("div", null, h("dt", { text: n }), h("dd", null, chip(s))))), { id: "ms", right: src("doc"), foot: "“Measured” means a value exists in a recorded result. It does not mean validated." }),
+        panel("Reproducibility", kvList([["Run id", "not shown (historical record)"], ["Configuration hash", "eaa46df0", true], ["Compute", "T4 GPU"], ["Run date", "2026-10-13, reproduced 2026-10-16"]]), { id: "rp", right: src("doc") }))));
+  main.append(livePanel, h("div", { style: "height:24px" }), doc);
+  liveHead.replaceWith(src(conn.state === "connected" ? "live" : "none"));
+  await connected(); if (tok !== renderTok) return;
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  liveBox.replaceChildren();
+  const head = livePanel.querySelector("header .src"); if (head) head.replaceWith(src(conn.state === "connected" ? "live" : "none"));
+  if (conn.state !== "connected") { liveBox.append(stateBox("unavailable", "Not connected", "The research API did not respond, so no run tables can be shown. The documented figures below are unaffected.", retry(async () => { await connect(true); route(); }))); return; }
+  if (!conn.runs.length) { liveBox.append(stateBox("empty", "No run is loaded", "The research API lists no runs.")); return; }
+  if (!info || info.error) { liveBox.append(stateBox("error", "Could not load this run", info ? info.error : "unknown")); return; }
+  const top = h("div", { class: "row", style: "margin-bottom:16px" }, runSelect(id => { sel.runId = id; sel.table = null; sel.i = null; route(); }));
+  liveBox.append(top, originBanner(info.origin, info.description));
+  if (!info.tables.length) { liveBox.append(h("div", { style: "margin-top:16px" }, stateBox("empty", "This run has no result tables", "Result tables appear when tables/*.csv exists in the run. Figures above come from documents, not from this run.")), h("div", { style: "margin-top:16px" }, kvList([["Stored forecasts", info.forecasts.join(", ") || "none"]]))); return; }
+  if (!sel.table || !info.tables.includes(sel.table)) sel.table = info.tables[0];
+  const ts = h("select", { id: "tsel" }, info.tables.map(t => h("option", { value: t, selected: t === sel.table ? true : null }, t)));
+  top.append(h("label", { class: "field" }, "Result table", ts));
+  const tb = h("div", { style: "margin-top:16px" }, skeleton(3)); liveBox.append(tb);
+  const loadT = async () => {
+    try {
+      const t = await api(`/api/runs/${U(sel.runId)}/tables/${U(sel.table)}`); if (tok !== renderTok) return;
+      if (!Array.isArray(t.columns) || !Array.isArray(t.rows)) throw new Error("invalid table");
+      syncHash("evaluation", ["run", "table"]);
+      const num = t.columns.map((c, i) => t.rows.some(r => typeof r[i] === "number") ? i : -1).filter(i => i >= 0);
+      tb.replaceChildren(dataTable(t.columns.map(colName), t.rows.map(r => r.map((v, i) => cellVal(t.columns[i], v))), { num, caption: `${t.table}: ${fi(t.rows.length)} rows${t.truncated ? " (truncated to the first rows)" : ""}` }), h("p", { class: "foot" }, "Descriptive table written by the run. Counts accompany every aggregate; rows below the minimum sample size are flagged, not hidden."));
+    } catch (e) { if (tok === renderTok) tb.replaceChildren(stateBox("error", "Could not load this table", e.message, retry(() => { cache.clear(); loadT(); }))); }
+  };
+  ts.addEventListener("change", () => { sel.table = ts.value; tb.replaceChildren(skeleton(3)); loadT(); }); await loadT();
+}
+
+/* ---------- pages: data & provenance ---------- */
+function ledgerPanel(title, l, id) {
+  const ck = ledgerCheck(l);
+  return panel(title, l ? [kvList([["Rows in", fi(l.rows_in)], ["Kept", fi(l.kept)], ["Rejected", fi(ck && ck.rej)], ["Reconciles (in = kept + rejected)", ck ? (ck.ok ? "yes" : "NO") : "—"]]), Object.keys(l.rejects || {}).length ? h("div", { style: "margin-top:14px" }, dataTable(["Reason", "Rows"], Object.entries(l.rejects).map(([k, v]) => [k.replace(/_/g, " "), fi(v)]), { num: [1] })) : h("p", { class: "foot", text: "No rejects recorded." })] : h("p", { class: "muted", text: "Not recorded in the manifest." }), { id, right: src("live") });
+}
+async function pageData(main, tok) {
+  lede(main, "Where the data comes from, what is known about its licence, and how it became a surface.");
+  main.append(h("div", { class: "grid2 even", style: "align-items:start" },
+    panel("Source identity", kvList([["Dataset", "None authorized for display"], ["Status", "The hosted dataset used in the historical E-1/E-2 experiments was withdrawn on 2026-10-20 (DEC-002); its identifiers are not shown here"], ["Current runs", "Synthetic demo runs, or a stored run you load locally"]]), { id: "si", right: src("doc"), foot: "Source: docs/data/HOSTED_DATASET_ASSESSMENT.md; decision.md DEC-002" }),
+    panel("Licence status", h("div", { class: "stack", style: "gap:16px" }, h("div", { class: "state" }, h("div", { class: "row" }, h("h3", { text: "Dataset licence" }), chip("unverified")), h("p", { text: "The upstream terms of the withdrawn hosted dataset were never verified." })), h("div", { class: "state" }, h("div", { class: "row" }, h("h3", { text: "Licensed provider access" }), chip("unavailable")), h("p", { text: "No licensed provider is connected. Provider terms, pricing and a permitted sample have not been obtained." }))), { id: "lc", right: src("doc"), foot: "A source referenced in the documents is not thereby verified." })));
+  main.append(h("div", { style: "margin-top:24px" }, panel("Transformation history (historical E-1 run)", h("div", { class: "pipe" }, [["Hosted files", "Completed"], ["Streaming pre-filter", "9,468,584 rows in, 7,037,351 kept"], ["One out-of-the-money quote per row", "4,819,053 usable quotes"], ["Forward and discount from put-call parity", "Completed"], ["Implied-volatility inversion", "Black-76"], ["Surface grid", "6 tenors by 9 log-moneyness nodes, 3,500 dates"]].map(([n, s]) => h("div", { class: "node" }, h("div", { class: "nh" }, h("span", { class: "nm", text: n }), ico("completed")), h("span", { class: "ns", text: s })))), { id: "th", right: src("doc"), foot: "Source: " + D.e1src + " §2; docs/engineering/IMPLEMENTATION_MATRIX.md §6" })));
+  const tot = D.mix.reduce((a, b) => a + b[1], 0);
+  main.append(h("div", { class: "grid2 even", style: "margin-top:24px;align-items:start" },
+    panel("Data-quality checks: rows removed and why", [dataTable(["Reason", "Rows"], D.removed.map(r => [r[0], fi(r[1])]), { num: [1] }), h("p", { class: "foot" }, "Every row has exactly one disposition. Duplicate date, expiry and strike combinations: zero.")], { id: "dq", right: src("doc"), foot: "Source: " + D.e1src + " §2" }),
+    panel("Surface cell mix, documented run", [h("div", { class: "bar", role: "img", "aria-label": D.mix.map(m => m[0] + " " + m[1] + " percent").join(", ") }, D.mix.map(m => h("i", { style: `width:${m[1] / tot * 100}%;` + (m[2] === "s3" ? "background:var(--accent)" : m[2] === "s0" ? "background:var(--s3)" : "background:rgba(var(--hi),.4)") }))), h("div", { class: "legend", style: "margin-top:14px" }, D.mix.map(m => h("span", null, h("i", { class: "sw " + m[2] }), m[0] + " " + m[1].toFixed(1) + "%"))), h("p", { class: "foot", style: "margin-top:16px" }, "Static-arbitrage flags, necessary conditions only: calendar 0 of 123,461 checks; butterfly 194 of 113,504 checks. Vendor implied volatility compared with ours: median ratio 0.990, sanity check only.")], { id: "cm", right: src("doc"), foot: "Source: " + D.e1src + " §2" })));
+  const lv = h("div", { style: "margin-top:24px" }, panel("Lineage of the selected run", skeleton(3), { id: "lr", right: src("live") })); main.append(lv);
+  await connected(); if (tok !== renderTok) return;
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  lv.replaceChildren();
+  const one = (kids, right) => lv.append(panel("Lineage of the selected run", kids, { id: "lr", right }));
+  if (conn.state !== "connected") return one(stateBox("unavailable", "Not connected", "The research API did not respond. The documented figures above are unaffected.", retry(async () => { await connect(true); route(); })), src("none"));
+  if (!conn.runs.length) return one(stateBox("empty", "No run is loaded", "Lineage appears when a run with manifest.json is listed."), src("none"));
+  if (!info || info.error) return one(stateBox("error", "Could not load this run", info ? info.error : "unknown"), src("live"));
+  const g = info.lineage, st = info.status_counts || {}, tc = Object.values(st).reduce((a, b) => a + b, 0) || 1;
+  lv.append(h("div", { class: "stack" },
+    panel("Lineage of the selected run", [originBanner(info.origin, info.description), h("div", { style: "height:16px" }), g ? [kvList([["Dataset version", g.version_id, true], ["Configuration hash", g.config_sha256, true], ["Panel hash matches manifest", g.panel_hash_matches ? "yes" : "NO"], ["Ledgers conserved", String(g.ledgers_conserved)]]), Array.isArray(g.inputs) && g.inputs.length ? h("div", { style: "margin-top:16px" }, dataTable(["Input", "Bytes", "SHA-256"], g.inputs.map(i => [h("span", { class: "mono", text: String(i.name) }), fi(i.bytes), h("span", { class: "mono", style: "font-size:12px;word-break:break-all", text: String(i.sha256) })]), { num: [1] })) : null] : h("p", { class: "muted", text: "No manifest stored for this run." })], { id: "lr", right: src("live") }),
+    g ? h("div", { class: "grid2 even", style: "align-items:start" }, ledgerPanel("Pre-filter ledger", g.ledger_prefilter, "l1"), ledgerPanel("Quote ledger", g.ledger_quotes, "l2")) : null,
+    panel("Surface cell mix of this run", h("div", { class: "legend" }, [[3, "observed"], [1, "interpolated_T"], [2, "interpolated_k"], [0, "missing"]].map(([s, k]) => h("span", null, h("i", { class: "sw s" + s }), `${STATUS[s][1]}: ${fi(st[k] || 0)} (${((st[k] || 0) / tc * 100).toFixed(1)}%)`))), { id: "sm2", right: src("live") })));
+}
+
+/* ---------- pages: experiments & pipeline ---------- */
+async function pageExperiments(main, tok) {
+  lede(main, "Pipeline stages, recorded experiments, configuration and blockers.");
+  const rc = h("div");
+  main.append(h("div", { class: "stack" },
+    panel("Pipeline", h("div", { class: "pipe" }, D.flow.map(([n, s, st]) => h("div", { class: "node " + st }, h("div", { class: "nh" }, h("span", { class: "nm", text: n }), ico(STATE[st][0])), h("span", { class: "ns", text: s })))), { id: "pl", right: src("doc"), foot: "Source: docs/engineering/IMPLEMENTATION_MATRIX.md §6 to §8; docs/data/DATA_SOURCE_ASSESSMENT.md" }),
+    h("div", { class: "grid2", style: "align-items:start" },
+      panel("Recorded experiments", dataTable(["Experiment", "Date", "State", "Note"], D.experiments.map(r => [h("b", { style: "font-weight:600", text: r[0] }), r[1], chip(r[2]), r[3]])), { id: "ex", right: src("doc"), foot: "No experiment registry exists (DEC-010 is only proposed): this history is documented, not tracked live." }),
+      panel("Configuration of E-1 (historical)", kvList(D.e1cfg), { id: "cf", right: src("doc"), foot: "Source: " + D.e1src + " §1, §3, §5, §7" })),
+    panel("Blockers and failures", h("div", { class: "stack", style: "gap:14px" }, h("div", { class: "row", style: "flex-wrap:nowrap;align-items:flex-start" }, chip("blocked"), h("span", { text: "Real-data feasibility with a licensed provider. Provider terms, pricing and a permitted sample have not been obtained." })), h("div", { class: "row", style: "flex-wrap:nowrap;align-items:flex-start" }, chip("unverified"), h("span", { text: "Licence of the withdrawn dataset's upstream source (historical)." })), h("p", { class: "muted", text: "No failures are recorded in the project documents." })), { id: "bf", right: src("doc"), foot: "Absence of a record is not evidence that nothing failed. Sources: CLAUDE.md status line; docs/research/PHASE0_CLOSURE_RECORD.md" }), rc));
+  await connected(); if (tok !== renderTok) return;
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  if (conn.state === "connected" && info && !info.error) rc.append(panel("Configuration of the selected run", info.lineage ? kvList([["Run", sel.runId.slice(0, 12), true], ["Origin", info.origin], ["Configuration hash", info.lineage.config_sha256, true], ["Dataset version", info.lineage.version_id.slice(0, 16), true]]) : h("p", { class: "muted", text: "No manifest stored for this run." }), { id: "rc", right: src("live") }));
+}
+
+/* ---------- pages: artifacts ---------- */
+async function pageArtifacts(main, tok) {
+  lede(main, "What exists for the selected run, and what the repository documents. Files are listed here, not opened.");
+  const runBox = h("div", null, skeleton(3));
+  main.append(h("div", { class: "stack" }, panel("Artifacts of the selected run", runBox, { id: "ar", right: src(conn.state === "connected" ? "live" : "none") }),
+    panel("Notebooks", [h("ul", { style: "list-style:none;margin:0;padding:0;display:grid;gap:12px" }, D.notebooks.map(n => h("li", { class: "row" }, h("span", { class: "mono", style: "overflow-wrap:anywhere", text: n }), chip("completed", "Generated"), h("span", { class: "muted", style: "font-size:13px", text: "Executed on a hosted notebook service (historical); outputs are not in the repository." })))), h("p", { class: "foot" }, "The research API does not serve notebooks; open them from the repository.")], { id: "nb", right: src("doc") }),
+    panel("Not available through the API", h("div", { class: "stack", style: "gap:12px" }, [["Evaluation report and plots", "Produced by the run (report.md, plots/*.png) but not served by the research API."], ["Model checkpoints", "Not loaded by this interface and not in the repository."], ["Per-cell quote lineage", "Not stored."]].map(([n, t]) => h("div", { class: "row" }, chip("unavailable"), h("b", { style: "font-weight:600", text: n }), h("span", { class: "muted", text: t })))), { id: "na", right: src("doc") }),
+    panel("Expected, not yet produced", h("p", { class: "ink2", text: "Forecast files and result tables from a licensed-data run. No licensed data is available." }), { id: "xp", right: chip("planned") })));
+  await connected(); if (tok !== renderTok) return;
+  const info = await ensureRun(); if (tok !== renderTok) return; runBox.replaceChildren();
+  const hd = $("#ar", main).parentElement.querySelector(".src"); if (hd) hd.replaceWith(src(conn.state === "connected" ? "live" : "none"));
+  if (conn.state !== "connected") { runBox.append(stateBox("unavailable", "Not connected", "The research API did not respond (" + conn.err + ").", retry(async () => { await connect(true); route(); }))); return; }
+  if (!conn.runs.length) { runBox.append(stateBox("empty", "No run is loaded", "The research API lists no runs.")); return; }
+  if (!info || info.error) { runBox.append(stateBox("error", "Could not load this run", info ? info.error : "unknown")); return; }
+  const f = (t, s) => h("div", { class: "row", style: "padding:8px 0;flex-wrap:nowrap;align-items:flex-start" }, chip(s ? "completed" : "unavailable", s ? "Present" : "Not present"), h("b", { style: "font-weight:600", text: t }));
+  const list = (items, mkLink) => items.length ? h("ul", { style: "margin:0;padding:0;list-style:none;display:grid;gap:8px" }, items.map(t => h("li", null, mkLink(t)))) : h("p", { class: "muted", text: "None." });
+  runBox.append(h("div", { class: "row", style: "margin-bottom:12px" }, runSelect(id => { sel.runId = id; sel.i = null; route(); })), originBanner(info.origin, info.description),
+    h("div", { style: "margin-top:12px" }, f(`Surface panel (panel.npz): ${info.dates.length} dates, ${info.tenor_days.length} tenors by ${info.k_nodes.length} log-moneyness nodes`, true), f("Run label (meta.json)", info.origin !== "unlabelled"), f("Manifest (manifest.json)", !!info.lineage)),
+    h("h3", { style: "font-size:16px;margin:16px 0 8px", text: "Result tables" }), list(info.tables, t => h("a", { class: "link", href: href("evaluation", { run: sel.runId, table: t }) }, t, ico("arrow"))),
+    h("h3", { style: "font-size:16px;margin:16px 0 8px", text: "Stored forecasts" }), list(info.forecasts, m => h("a", { class: "link", href: href("explorer", { run: sel.runId, model: m }) }, m, ico("arrow"))));
+}
+
+/* ---------- pages: methodology & documentation ---------- */
+function pageMethodology(main, sub) {
+  lede(main, "Assumptions, evaluation procedure, limitations and where each is documented. Text here summarises project documents; the documents are authoritative.");
+  const tabs = [["", "Methodology"], ["limitations", "Known limitations"], ["documents", "Documents"]];
+  main.append(h("nav", { class: "tabs", "aria-label": "Documentation sections" }, tabs.map(([k, t]) => h("a", { class: "tab", style: "text-decoration:none;display:inline-flex;align-items:center", href: href("methodology", null, k), "aria-current": sub === k ? "page" : null }, t))));
+  const sec = (t, kids, id, s) => panel(t, kids, { id, right: src("doc"), foot: s ? "Source: " + s : null });
+  const ul = items => h("ul", { class: "ink2", style: "margin:0;padding-left:20px;display:grid;gap:8px;max-width:75ch" }, items.map(t => h("li", { text: t })));
+  if (sub === "limitations") { main.append(sec("Known limitations", [h("p", { class: "ink2", style: "margin-bottom:16px", text: "A selection. The complete, living list is in docs/research/KNOWN_LIMITATIONS.md; a limitation is removed only with evidence." }), dataTable(["ID", "Limitation"], D.limits.map(r => [h("span", { class: "mono", text: r[0] }), r[1]]))], "kl", "docs/research/KNOWN_LIMITATIONS.md")); return; }
+  if (sub === "documents") {
+    main.append(h("div", { class: "stack" }, h("div", { class: "banner info", role: "note" }, ico("info"), "The research API does not serve documents. The paths below are repository paths; open them in the repository. They are not links."), D.docsList.map(([g, items], gi) => sec(g, h("ul", { style: "list-style:none;margin:0;padding:0;display:grid;gap:10px" }, items.map(([p, t]) => h("li", { class: "row", style: "justify-content:space-between" }, h("span", { text: t }), h("span", { class: "mono muted", style: "overflow-wrap:anywhere", text: p })))), "dg" + gi))));
+    return;
+  }
+  main.append(h("div", { class: "stack" },
+    sec("Research question", h("p", { style: "max-width:70ch" }, "Can implied-volatility surfaces built from options data be forecast, and how do the forecasts compare with simple baselines? The guiding principle is to make every forecast inspectable, every experiment reproducible and every limitation visible. This is a research and education tool, not a trading product."), "m1", "CLAUDE.md §1"),
+    sec("How surfaces are built", ul(["Quotes are validated and filtered, with every removal counted and given a reason.", "The forward and discount factor are implied per expiry from put-call parity.", "One out-of-the-money quote is used per strike, and implied volatility is inverted with Black-76.", "Values are placed on a constant-maturity grid; the historical E-1 run (withdrawn dataset) used 6 tenors by 9 log-moneyness nodes.", "Each cell is observed, interpolated in tenor, interpolated in strike or missing. Cells are never extrapolated, and missing cells are never filled."]), "m2", "docs/research/E1_RESULTS.md §2; docs/engineering/IMPLEMENTATION_MATRIX.md §6"),
+    sec("How forecasts are evaluated", ul(["Walk-forward with expanding windows: 8 test years (2016 to 2023); the validation year is the year before each test year.", "Hyperparameters are fixed in advance; neural models use 3 seeds.", "The target is the one-day change of each cell. The primary metric uses cells observed at the target date with a real value at the forecast origin.", "Baselines: persistence, rolling mean, ridge and PCA-ridge. Neural models: MLP and GRU, run only on a verified GPU.", "A leakage audit checks that features use only information available at the forecast date.", "Results are descriptive. No significance, interval or calibration claim is made."]), "m3", "docs/research/E1_RESULTS.md §1, §3; docs/research/KNOWN_LIMITATIONS.md L-22, L-25"),
+    sec("Reproducibility", h("p", { style: "max-width:70ch" }, "Runs are identified by a content-hashed dataset version and a configuration hash recorded in the manifest. The notebooks regenerate a run from the source code. Data and model weights are not in the repository."), "m4", "docs/research/E1_RESULTS.md §1, §5; docs/engineering/IMPLEMENTATION_MATRIX.md §8"),
+    h("p", null, h("a", { class: "link", href: href("methodology", null, "limitations") }, "Read the known limitations", ico("arrow")))));
+}
+
+/* ---------- landing page ---------- */
+const HERO = ["OOTTTOOOO", "OTOTOOTMO", "TOKOMOOOT", "OOMOTOOOM", "OTOOOTOOO", "MOOOMOOMO"];
+const TENORS = [7, 14, 30, 60, 91, 182];
+async function pageLanding(tok) {
+  const root = app(); root.replaceChildren(); cleanup();
+  document.documentElement.dataset.theme = "light";
+  const menuBtn = h("button", { class: "btn bsec lmenu", type: "button", "aria-expanded": "false", "aria-controls": "lnl" }, ico("menu"), "Menu");
+  const links = h("ul", { id: "lnl" }, [["Home", "#/", "page"], ["Workbench", href("overview")], ["Methodology", href("methodology")], ["Data & Provenance", href("data")], ["Documentation", href("methodology", null, "documents")]].map(([t, hr, cur]) => h("li", null, h("a", { href: hr, "aria-current": cur || null }, t))));
+  menuBtn.addEventListener("click", () => { const o = links.classList.toggle("open"); menuBtn.setAttribute("aria-expanded", String(o)); });
+  links.addEventListener("click", e => { if (e.target.closest("a")) { links.classList.remove("open"); menuBtn.setAttribute("aria-expanded", "false"); } });
+  const cta = cls => h("a", { class: "btn " + cls, href: href("overview") }, "Open Research Workbench");
+  const hero = h("div", { class: "plate", "data-theme": "dark" },
+    h("h2", { text: "Surface status grid, conceptual illustration" }),
+    h("div", { class: "cgrid", role: "img", "aria-label": "Conceptual 6 by 9 grid of surface-cell statuses. Not model output." }, HERO.map((row, j) => [h("span", { class: "rl", text: TENORS[j] + "d" }), [...row].map(ch => h("span", { class: "c s" + ({ O: 3, T: 1, K: 2, M: 0 })[ch] }))])),
+    h("p", { class: "cap" }, h("span", { style: "display:block;margin-bottom:6px" }, "Rows: tenor (days). Columns: log-moneyness k, −0.20 to +0.08."), "Conceptual illustration. Not a model output."),
+    h("div", { class: "legend", style: "margin-top:14px;color:#a7b2c2" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", null, h("i", { class: "sw s" + s, style: s === 3 ? "background:#86c8e8" : s === 0 ? "border-color:#7d8999" : "" }), t))));
+  const caps = D.caps.map(([n, t, s]) => h("div", { class: "caprow reveal" }, h("h3", { text: n }), chip(s), h("p", { text: t })));
+  root.append(h("div", { class: "ln" },
+    h("div", { class: "wrap" }, h("header", { class: "lnav" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), h("nav", { "aria-label": "Primary", style: "display:contents" }, links), cta("dark"), menuBtn)),
+    h("main", { id: "main", tabindex: -1 },
+      h("div", { class: "wrap" }, h("section", { class: "hero", "aria-labelledby": "h1" }, h("div", null, h("h1", { id: "h1", text: "See the structure behind volatility." }), h("p", { class: "sub", text: "Explore implied-volatility surfaces, examine model behavior, and evaluate quantitative forecasts through a transparent research workflow." }), h("div", { class: "acts" }, cta("dark"), h("a", { class: "link", href: href("methodology") }, "Explore Methodology"))), h("div", null, hero, h("p", { class: "meta" }, "Local research tool · stored or synthetic runs only · Backtest only")))),
+      h("section", { class: "sec", "aria-labelledby": "h2a" }, h("div", { class: "wrap split" }, h("div", { class: "reveal" }, h("h2", { class: "big", id: "h2a", text: "What this project investigates" }), h("div", { class: "pull" }, chip("completed", "Documented, descriptive only"), h("p", { text: "Historical record (E-1, withdrawn dataset): neither neural architecture beat the persistence baseline on pooled error." }))), h("div", { class: "txt reveal" }, h("p", { text: "An implied-volatility surface describes how the market prices options across strikes and expiries. This project constructs those surfaces from option quotes, forecasts how they change from one day to the next, and compares every forecast against simple baselines such as persistence." }), h("p", { text: "Forecasts are judged out of sample, in chronological order, with the number of cells behind every figure shown. Results so far are descriptive: no claim of statistical significance, calibration or trading value is made." })))),
+      h("section", { class: "sec", "aria-labelledby": "h2b", style: "padding-top:0" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2b", text: "What the workbench does" }), h("div", { style: "margin-top:24px;max-width:960px" }, caps))),
+      h("section", { class: "sec step", "aria-labelledby": "h2d" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2d", text: "Research workflow" }), h("ol", { class: "tl" }, D.flow.map(([n, s, st]) => h("li", { class: "reveal" }, h("span", { class: "dot", style: `color:var(--${({ completed: "ok", blocked: "block" })[st] || "plan"})` }, ico(STATE[st][0])), h("b", { text: n }), h("small", { text: s })))))),
+      h("section", { class: "sec", "aria-labelledby": "h2e" }, h("div", { class: "wrap" }, h("div", { class: "integ reveal" }, h("h2", { class: "big", id: "h2e", text: "Data integrity and limitations" }), h("div", { class: "split", style: "margin-top:28px" }, h("div", null, h("h3", { style: "font-size:1.1rem;font-weight:500", text: "Surface-cell kinds" }), h("div", { class: "l2" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"], ["pred", "Predicted"]].map(([s, t]) => h("div", null, h("i", { class: "sw " + (s === "pred" ? "pred" : "s" + s) }), t)))), h("dl", { class: "stl" }, [["Upstream licence of the withdrawn dataset (historical)", chip("unverified")], ["Licensed provider access", chip("unavailable")], ["Real-data evaluation", chip("completed", "Completed, one underlying, descriptive")], ["Statistical inference", chip("notpursued")], ["Model validation", chip("unverified")]].map(([k, v]) => h("div", null, h("dt", { text: k }), h("dd", null, v)))))))),
+      h("section", { class: "sec", "aria-labelledby": "h2f", style: "padding-top:0" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2f", text: "Documentation" }), h("ul", { class: "dl2" }, [["Research methodology", href("methodology")], ["Known limitations", href("methodology", null, "limitations")], ["Data dictionary", href("methodology", null, "documents")], ["Experiment E-1 results (historical)", href("evaluation")], ["Experiment E-2 results (historical)", href("experiments")], ["Reproducibility notebooks", href("artifacts")]].map(([t, hr]) => h("li", null, h("a", { href: hr }, t, ico("arrow")))))))),
+    h("footer", { class: "lfoot" }, h("div", { class: "wrap" }, h("b", { text: "Neural Volatility Surface" }), h("span", { class: "ink2", text: "Research and education only. Not investment advice and not a trading product." }), h("nav", { "aria-label": "Footer" }, h("a", { href: href("methodology") }, "Methodology"), h("a", { href: href("data") }, "Data & Provenance"), h("a", { href: href("methodology", null, "documents") }, "Documentation"))))));
+  reveal(root);
+}
+
+/* ---------- router ---------- */
+let first = true;
+async function route() {
+  const tok = ++renderTok, r = parseHash(); readSel(r.q);
+  document.title = (r.page === "landing" ? "Neural Volatility Surface" : TITLES[r.page] + " · Neural Volatility Surface") + " · Quantitative Research Workbench";
+  if (r.page === "landing") { await pageLanding(tok); }
+  else {
+    const main = shell(r.page), fn = { overview: pageOverview, explorer: pageExplorer, evaluation: pageEvaluation, data: pageData, experiments: pageExperiments, artifacts: pageArtifacts }[r.page];
+    try { if (fn) await fn(main, tok); else pageMethodology(main, r.sub); }
+    catch (e) { if (tok === renderTok) main.append(stateBox("error", "This page could not be drawn", String(e && e.message || e), retry(route))); }
+    if (tok === renderTok) { const c = $(".ctx", main); if (c) c.replaceWith(ctxBar()); }
+  }
+  if (tok === renderTok && !first) { const t = $("#pt") || $("#h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); window.scrollTo(0, 0); } }
+  first = false;
+}
+window.addEventListener("hashchange", route);
+connect().then(route);
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ audit: it cannot judge whether documents are correct, only whether they are cons
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -54,6 +55,24 @@ def check_required():
     return {"missing": miss, "trivial": small}
 
 
+def exists_exact_case(path: Path) -> bool:
+    """True if ``path`` exists with exactly this spelling, even on a case-insensitive file system (Windows, macOS):
+    a link that only resolves there would break on the Linux CI runner."""
+    path = Path(os.path.normpath(path))      # lexical only: resolve() would silently canonicalise the case on Windows
+    if not path.exists():
+        return False
+    try:
+        rel = path.relative_to(ROOT)
+    except ValueError:
+        return True  # outside the repository: not our concern
+    cur = ROOT
+    for part in rel.parts:
+        if part not in {c.name for c in cur.iterdir()}:
+            return False
+        cur = cur / part
+    return True
+
+
 def check_links():
     broken, total = [], 0
     for p in md_files():
@@ -62,7 +81,7 @@ def check_links():
                 continue
             total += 1
             target = t.split("#")[0]
-            if target and not (p.parent / target).resolve().exists():
+            if target and not exists_exact_case(p.parent / target):
                 broken.append(f"{p.relative_to(ROOT)} -> {t}")
     return {"checked": total, "broken": broken}
 
@@ -120,16 +139,39 @@ def check_data_and_env():
 
 def check_decisions():
     rows = re.findall(r"^\|\s*(DEC-\d{3})\s*\|[^|]*\|\s*([^|]*?)\s*\|", (ROOT / "decision.md").read_text(encoding="utf-8"), re.M)
-    return {"n": len(rows), "decided": [i for i, s in rows if s.upper().startswith("DECIDED")],
+    plain = {i: s.replace("*", "").strip().upper() for i, s in rows}   # statuses are often bold: "**DECIDED (option A) ..."
+    return {"n": len(rows), "decided": [i for i, s in plain.items() if s.startswith(("DECIDED", "OWNER DECISION"))],
+            "interim": [i for i, s in plain.items() if s.startswith("INTERIM")],
             "status_by_id": {i: s for i, s in rows}}
+
+
+def check_status_claims():
+    """Invariants between the status documents and the repository (not just 'files exist')."""
+    problems = []
+    plan = (ROOT / "IMPLEMENTATION_PLAN.md").read_text(encoding="utf-8")
+    phases = dict(re.findall(r"^\|\s*(F|\d)\s*\|[^|]*\|\s*([^|]*?)\s*\|", plan, re.M))
+    for ph, status in phases.items():
+        if ph != "F" and re.search(r"GATE_PASSED|gate\s+passed|\bgate\s+MET\b", status, re.I) and "not" not in status.lower():
+            problems.append(f"phase {ph} is described as gate-passed in IMPLEMENTATION_PLAN.md; only the owner may do that")
+    src = ROOT / "backend" / "src"
+    has_code = src.is_dir() and any(p.stat().st_size > 0 for p in src.rglob("*.py"))
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    if has_code and re.search(r"\(none exist\)|NOT IMPLEMENTED, NOT VALIDATED", readme):
+        problems.append("README.md says product code / neural work does not exist, but backend/src contains Python code")
+    ms = ROOT / "docs" / "engineering" / "MODEL_STATUS.json"
+    if ms.is_file():
+        data = json.loads(ms.read_text(encoding="utf-8"))
+        if data.get("status") == "complete" and not data.get("confirmed_by"):
+            problems.append("MODEL_STATUS.json is 'complete' without confirmed_by (owner confirmation)")
+    return {"phases_in_plan": sorted(phases), "problems": problems}
 
 
 def main(out):
     report = {"required": check_required(), "links": check_links(), "ids": check_ids(), "secrets": check_secrets(),
-              "data_and_env": check_data_and_env(), "decisions": check_decisions()}
+              "data_and_env": check_data_and_env(), "decisions": check_decisions(), "status_claims": check_status_claims()}
     hard = (report["required"]["missing"] or report["links"]["broken"] or report["secrets"]["hits"]
             or report["data_and_env"]["tracked_data_files"] or report["data_and_env"]["tracked_env_files"]
-            or any(report["ids"]["undefined_references"].values()))
+            or any(report["ids"]["undefined_references"].values()) or report["status_claims"]["problems"])
     report["hard_failures"] = bool(hard)
     text = json.dumps(report, indent=1)
     print(text)

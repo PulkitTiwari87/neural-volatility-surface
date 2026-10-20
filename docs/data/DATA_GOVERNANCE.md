@@ -19,6 +19,8 @@
 | Secrets | API keys, tokens | Environment/secret store only; never in data, logs, or Git |
 
 ## 3. Licence review checklist (complete per candidate source, record in the ADR for DEC-002)
+The step-by-step process, the owner-authorization record template and the register of what is authorized today are in [DATA_ACQUISITION_AUTHORIZATION](DATA_ACQUISITION_AUTHORIZATION.md); no acquisition happens without an owner-signed record.
+
 - [ ] May raw responses be stored locally? For how long?
 - [ ] May derived data (IV, surfaces, forecasts, metrics) be stored and shared? Under what attribution?
 - [ ] May any data or derivatives be displayed in an application — to the owner only, to a team, to the public?

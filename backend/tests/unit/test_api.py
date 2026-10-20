@@ -182,5 +182,117 @@ class ApiTests(unittest.TestCase):
             srv.server_close()
 
 
+class ApiRobustnessTests(unittest.TestCase):
+    """Corrupt / hostile run directories must give predictable 4xx/5xx JSON, never a crash or a leaked path."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.td = tempfile.TemporaryDirectory()
+        cls.dir = Path(cls.td.name)
+        wide, _ = make_chain(10, seed=1)
+        src = cls.dir / "chain.csv"
+        wide.to_csv(src, index=False)
+        m = ingest(cls.dir / "store", [src], Config())
+        cls.root = cls.dir / "store" / "datasets"
+        cls.good = cls.root / m["version_id"]
+        with np.load(cls.good / "panel.npz") as z:
+            cls.arrays = {k: z[k] for k in z.files}
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.td.cleanup()
+
+    def _run(self, name, **arrays):
+        d = self.root / name
+        d.mkdir(exist_ok=True)
+        np.savez_compressed(d / "panel.npz", **{**self.arrays, **arrays})
+        return d
+
+    def test_empty_table_file_is_an_empty_table_not_a_crash(self):
+        d = self._run("empty_table")
+        (d / "tables").mkdir(exist_ok=True)
+        (d / "tables" / "blank.csv").write_text("")
+        code, _, t = _get(RunStore(self.root), "/api/runs/empty_table/tables/blank")
+        self.assertEqual((code, t["columns"], t["rows"]), (200, [], []))
+
+    def test_undecodable_table_is_a_400(self):
+        d = self._run("bad_bytes")
+        (d / "tables").mkdir(exist_ok=True)
+        (d / "tables" / "t.csv").write_bytes(b"a,b\n\xff\xfe,1\n")
+        self.assertEqual(_get(RunStore(self.root), "/api/runs/bad_bytes/tables/t")[0], 400)
+
+    def test_malformed_meta_json_leaves_the_run_listed_as_unlabelled(self):
+        d = self._run("bad_meta")
+        (d / "meta.json").write_text("{not json")
+        store = RunStore(self.root)
+        listed = {r["id"]: r for r in _get(store, "/api/runs")[2]}
+        self.assertEqual(listed["bad_meta"]["origin"], "unlabelled")
+        self.assertEqual(_get(store, "/api/runs/bad_meta")[0], 200)
+
+    def test_malformed_manifest_is_a_400_not_silently_dropped_lineage(self):
+        d = self._run("bad_manifest")
+        (d / "manifest.json").write_text('["not", "an", "object"]')
+        code, _, body = _get(RunStore(self.root), "/api/runs/bad_manifest")
+        self.assertEqual(code, 400)
+        self.assertIn("manifest.json", body["error"])
+
+    def test_corrupt_or_incomplete_panel_is_a_400(self):
+        d = self.root / "garbage_panel"
+        d.mkdir(exist_ok=True)
+        (d / "panel.npz").write_bytes(b"this is not a zip archive")
+        self.assertEqual(_get(RunStore(self.root), "/api/runs/garbage_panel")[0], 400)
+        d2 = self.root / "short_panel"
+        d2.mkdir(exist_ok=True)
+        np.savez_compressed(d2 / "panel.npz", iv=self.arrays["iv"])
+        code, _, body = _get(RunStore(self.root), "/api/runs/short_panel")
+        self.assertEqual(code, 400)
+        self.assertIn("lacks required arrays", body["error"])
+
+    def test_missing_spot_is_null_and_the_response_is_strict_json(self):
+        spot = self.arrays["spot"].astype(float).copy()
+        spot[0] = np.nan
+        self._run("nan_spot", spot=spot)
+        code, ctype, s = _get(RunStore(self.root), "/api/runs/nan_spot/surface/0")
+        self.assertEqual((code, ctype), (200, "application/json"))
+        self.assertIsNone(s["spot"])
+
+    def test_symlink_pointing_outside_the_tables_folder_is_not_served(self):
+        outside = self.dir / "outside.csv"
+        outside.write_text("secret\n1\n")
+        d = self._run("linked")
+        (d / "tables").mkdir(exist_ok=True)
+        try:
+            (d / "tables" / "leak.csv").symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks not permitted on this system")
+        self.assertEqual(_get(RunStore(self.root), "/api/runs/linked/tables/leak")[0], 404)
+
+    def test_unexpected_reader_error_gives_generic_500_without_paths(self):
+        class Broken(RunStore):
+            def run_info(self, run_id):
+                raise KeyError(str(self.root / "secret-location"))
+        code, _, body = _get(Broken(self.root), "/api/runs/anything")
+        self.assertEqual(code, 500)
+        self.assertEqual(body, {"error": "the run data could not be read"})
+
+
+class ApiOriginLabelTests(unittest.TestCase):
+    """GR-DATA-04: manifest origin is a fallback label; a disagreeing meta.json makes the run 'unlabelled'."""
+
+    def test_manifest_origin_fallback_and_conflict(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "chain.csv"
+            make_chain(10, seed=1)[0].to_csv(src, index=False)
+            m = ingest(Path(td) / "store", [src], Config(), origin="synthetic")
+            root = Path(td) / "store" / "datasets"
+            run = root / m["version_id"]
+            store = RunStore(root)
+            (run / "meta.json").unlink()
+            self.assertEqual(_get(store, f"/api/runs/{m['version_id']}")[2]["origin"], "synthetic")
+            (run / "meta.json").write_text(json.dumps({"origin": "real", "description": "x"}))
+            info = _get(store, f"/api/runs/{m['version_id']}")[2]
+            self.assertEqual((info["origin"], info["origin_conflict"]), ("unlabelled", True))
+
+
 if __name__ == "__main__":
     unittest.main()

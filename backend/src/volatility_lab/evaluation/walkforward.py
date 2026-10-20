@@ -62,9 +62,20 @@ def make_folds(p: Prepared, cfg: SplitConfig, val_mode: str = "prev_year", val_f
     return folds
 
 
+class LeakageError(AssertionError):
+    """A fold lets label or origin dates of one set reach into a later set. Subclasses ``AssertionError`` so existing
+    callers keep working, but it is *raised*, not asserted: ``python -O`` strips ``assert`` and would silently disable
+    the check."""
+
+
 def assert_no_overlap(p: Prepared, f: Fold) -> None:
     """Hard leakage check: label days and origins are chronologically separated across the three sets."""
     odate, tdate = p.dates[p.origins], p.dates[p.targets]
-    assert tdate[f.train].max() < odate[f.val].min(), "train labels reach into validation"
-    assert tdate[f.val].max() < odate[f.test].min(), "validation labels reach into test"
-    assert odate[f.train].max() < odate[f.val].min() <= odate[f.val].max() < odate[f.test].min(), "origins not chronological"
+    if min(f.train.size, f.val.size, f.test.size) == 0:
+        raise LeakageError("a fold set is empty: the chronological check cannot be evaluated")
+    if not tdate[f.train].max() < odate[f.val].min():
+        raise LeakageError("train labels reach into validation")
+    if not tdate[f.val].max() < odate[f.test].min():
+        raise LeakageError("validation labels reach into test")
+    if not odate[f.train].max() < odate[f.val].min() <= odate[f.val].max() < odate[f.test].min():
+        raise LeakageError("origins not chronological")

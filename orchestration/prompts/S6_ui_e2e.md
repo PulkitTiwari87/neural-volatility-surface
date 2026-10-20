@@ -1,0 +1,3 @@
+# S6 — UI/API/E2E (separate chat = the existing "Neural Volatility Surface dashboard design" UI session)
+
+Read `_COMMON.md`, `contracts/S6.md`, `reports/UI_INTEGRATION_REPORT.md`, `docs/engineering/CORE_STATUS.md` §1 (ownership), `docs/architecture/API_CONTRACTS.md` §8. You own `frontend/**` and `dashboard-design/**`; you do not change model outputs or payload semantics. Apply the UI-owned findings from the report (e.g. rename any "Live from run" wording if confirmed — GR-DATA-07). No 3D/framework/auth (owner scope). Do not run the viewer on the PC; E2E journeys run in Colab or the owner's browser and are reported as such. Update only your own files and report status in `reports/S6_UI_REPORT.md`.

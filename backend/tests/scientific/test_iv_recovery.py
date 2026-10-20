@@ -113,6 +113,21 @@ class BoundsAndInvalidInputTests(unittest.TestCase):
             self.assertEqual(int(st), bs.INVALID_INPUT, b)
             self.assertTrue(np.isnan(iv), b)
 
+    def test_roots_outside_the_solver_bracket_are_not_reported_as_arbitrage_bounds(self):
+        """Regression: a price inside the no-arbitrage bounds whose root lies beyond [SIGMA_LO, SIGMA_HI] used to be
+        labelled BELOW_LOWER_BOUND (even for a price of 95 on a 100 forward). It is a solver-range failure."""
+        F, K, T = self.F, 100.0, self.T
+        for sigma, expect in ((1e-5, bs.BELOW_SOLVER_FLOOR), (8.0, bs.ABOVE_SOLVER_CEILING),
+                              (20.0, bs.ABOVE_SOLVER_CEILING)):
+            price = float(bs.black76_price(F, K, T, sigma, True))
+            lower, upper = 0.0, F
+            self.assertTrue(lower < price < upper, sigma)       # genuinely inside the no-arbitrage bounds
+            iv, st = bs.implied_vol(price, F, K, T, True)
+            self.assertEqual(int(st), expect, sigma)
+            self.assertTrue(np.isnan(iv), sigma)
+        self.assertEqual(bs.STATUS_NAMES[bs.BELOW_SOLVER_FLOOR], "BELOW_SOLVER_FLOOR")
+        self.assertEqual(bs.STATUS_NAMES[bs.ABOVE_SOLVER_CEILING], "ABOVE_SOLVER_CEILING")
+
     def test_statuses_cover_a_mixed_array_without_cross_contamination(self):
         price = np.array([5.0, 0.0, np.nan, 100.0, 5.0])
         iv, st = bs.implied_vol(price, 100.0, 100.0, 0.25, True)

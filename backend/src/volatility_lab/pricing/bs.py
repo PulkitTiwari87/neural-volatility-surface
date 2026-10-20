@@ -17,8 +17,13 @@ OK = 0
 BELOW_LOWER_BOUND = 1  # price <= intrinsic: no positive IV
 ABOVE_UPPER_BOUND = 2  # price >= call: F / put: K, no finite IV
 INVALID_INPUT = 3
+# The price is inside the no-arbitrage bounds but the root lies outside [SIGMA_LO, SIGMA_HI]. These are solver-range
+# failures, not arbitrage violations, and must not be reported as BELOW_LOWER_BOUND / ABOVE_UPPER_BOUND.
+BELOW_SOLVER_FLOOR = 4  # price < price(SIGMA_LO): implied sigma < SIGMA_LO
+ABOVE_SOLVER_CEILING = 5  # price > price(SIGMA_HI): implied sigma > SIGMA_HI
 STATUS_NAMES = {OK: "OK", BELOW_LOWER_BOUND: "BELOW_LOWER_BOUND",
-                ABOVE_UPPER_BOUND: "ABOVE_UPPER_BOUND", INVALID_INPUT: "INVALID_INPUT"}
+                ABOVE_UPPER_BOUND: "ABOVE_UPPER_BOUND", INVALID_INPUT: "INVALID_INPUT",
+                BELOW_SOLVER_FLOOR: "BELOW_SOLVER_FLOOR", ABOVE_SOLVER_CEILING: "ABOVE_SOLVER_CEILING"}
 
 SIGMA_LO = 1e-4
 SIGMA_HI = 5.0
@@ -100,5 +105,5 @@ def implied_vol(price, F, K, T, is_call, *, n_iter: int = 48, chunk: int = 1_000
         ph = black76_price(fs, ks, ts, np.full(idx.size, SIGMA_HI), cs)
         bracketed = (pl <= ps) & (ps <= ph)
         iv[idx] = np.where(bracketed, sol, np.nan)
-        status[idx] = np.where(bracketed, OK, BELOW_LOWER_BOUND).astype(np.int8)
+        status[idx] = np.where(bracketed, OK, np.where(ps < pl, BELOW_SOLVER_FLOOR, ABOVE_SOLVER_CEILING)).astype(np.int8)
     return iv.reshape(shape), status.reshape(shape)

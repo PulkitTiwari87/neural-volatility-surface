@@ -89,5 +89,20 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(back["inputs"][0]["name"], "chain.csv")
 
 
+class StorageOriginTests(unittest.TestCase):
+    """GR-DATA-04 (full coverage in test_origin_label.py): the label is recorded but is not part of the version."""
+
+    def test_origin_is_recorded_without_changing_the_version_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = _write_chain(Path(td) / "chain.csv", seed=1)
+            plain = ingest(Path(td) / "a", [src], CFG)
+            labelled = ingest(Path(td) / "b", [src], CFG, origin="synthetic")
+            self.assertEqual(plain["version_id"], labelled["version_id"])
+            self.assertNotIn("origin", plain)
+            self.assertEqual(labelled["origin"], "synthetic")
+            with self.assertRaises(ValueError):
+                ingest(Path(td) / "c", [src], CFG, origin="bogus")
+
+
 if __name__ == "__main__":
     unittest.main()

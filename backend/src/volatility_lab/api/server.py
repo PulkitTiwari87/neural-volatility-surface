@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -28,6 +29,7 @@ _SURFACE = re.compile(r"^/api/runs/([^/]+)/surface/(\d{1,7})$")
 _FORECAST = re.compile(r"^/api/runs/([^/]+)/forecasts/([^/]+)/(\d{1,7})$")
 _TABLE = re.compile(r"^/api/runs/([^/]+)/tables/([^/]+)$")
 _RUN = re.compile(r"^/api/runs/([^/]+)$")
+_HOST = re.compile(r"^(?:\[([0-9a-f:.]+)\]|([^:\[\]@\s]+))(?::\d{1,5})?$")
 
 
 def _json(code: int, obj) -> tuple:
@@ -56,6 +58,10 @@ def dispatch(store: RunStore, raw_path: str, frontend: Path = FRONTEND) -> tuple
         return _json(404, {"error": str(e)})
     except FileNotFoundError:
         return _json(404, {"error": "not found"})
+    except (KeyError, IndexError, OSError, ValueError, zipfile.BadZipFile):
+        # Safety net for a corrupt run file the service did not anticipate: a predictable generic body, never a
+        # dropped connection or a stack trace / filesystem path in the response.
+        return _json(500, {"error": "the run data could not be read"})
 
 
 def make_handler(store: RunStore, frontend: Path = FRONTEND):
@@ -69,13 +75,24 @@ def make_handler(store: RunStore, frontend: Path = FRONTEND):
             self.end_headers()
             self.wfile.write(body)
 
+        def _host_ok(self) -> bool:
+            """DNS-rebinding guard for a local-only tool: only a loopback name may address this server. An absent or
+            empty Host header (HTTP/1.0 clients) is allowed; the socket is loopback-bound regardless."""
+            host = (self.headers.get("Host") or "").strip().lower()
+            if not host:
+                return True
+            m = _HOST.match(host)
+            return bool(m) and (m.group(1) or m.group(2)) in LOOPBACK
+
         def do_GET(self):  # noqa: N802
+            if not self._host_ok():
+                return self._send(*_json(400, {"error": "unexpected Host header"}), {})
             self._send(*dispatch(store, self.path, frontend), {})
 
         def _refuse(self):
             self._send(*_json(405, {"error": "read-only API"}), {"Allow": "GET"})
 
-        do_POST = do_PUT = do_DELETE = do_PATCH = _refuse  # noqa: N815
+        do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = _refuse  # noqa: N815
 
         def log_message(self, *_):  # no request logging
             pass

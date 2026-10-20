@@ -115,9 +115,14 @@ They can show that the pipeline conserves records, recovers known volatilities, 
 
 ## 7. Freeze record (to complete)
 ```
-MVD thresholds frozen on: ____   by: ____   (owner)
-Amendments: ____
-Pilot-derived values (c, ρ, density targets, regime rule): ____
+MVD thresholds frozen on: 2026-10-20   by: project owner (in chat, "Adopt the PROPOSED ones")
+  Frozen as owner-adopted (NOT evidence-based): M1-M5, M7, M9, M11, M12 as written in section 2, and the
+  starting M6 target of 60 % observed nodes (M3: >= 2,000 snapshots, >= 95 % of trading days, no gap > 5 days;
+  M4: >= 600 never-selected test origins or the pilot-implied number, whichever is larger).
+  Still open: every "TBD-pilot" value (regime rule M5, M6 5th percentile, M8 share, c, rho). M10 (licence) is UNMET.
+Amendments: 2026-10-20 the hosted dataset is no longer authorized (DEC-002), so no real data exists against which
+  the MVD can be evidenced; the real-data track stays BLOCKED.
+Pilot-derived values (c, ρ, density targets, regime rule): ____ (no pilot possible without an authorized sample)
 Primary comparison & r*: ____
 Signed before any model result was viewed: yes / no
 ```
