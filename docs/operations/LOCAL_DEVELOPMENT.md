@@ -1,6 +1,6 @@
 # Local Development
 
-**Status:** PLANNED — **no setup is possible yet.** No toolchain, dependency manifest, lockfile, scripts or code exist. This document is a placeholder with the structure that will be filled when the first implementation phase selects tools (DEC-015). **Do not invent or paste setup commands that do not exist.** · **Related:** [CONFIGURATION](CONFIGURATION.md), [CODING_STANDARDS](../engineering/CODING_STANDARDS.md), [TESTING_STRATEGY](../engineering/TESTING_STRATEGY.md)
+**Status:** PARTIAL (updated 2026-10-21). Research code exists (`backend/src/volatility_lab`, `scripts/phase0_synthetic`, `frontend/index.html`) but there is **no toolchain decision, dependency manifest or lockfile** (DEC-015 is OPEN), so a clean-machine setup procedure is still not written. **Do not invent or paste setup commands that do not exist.** · **Related:** [CONFIGURATION](CONFIGURATION.md), [CODING_STANDARDS](../engineering/CODING_STANDARDS.md), [TESTING_STRATEGY](../engineering/TESTING_STRATEGY.md)
 
 ## Phase 0 synthetic spike (the only runnable code today)
 Verified on 2026-10-12 on Windows 11, CPython 3.12.6 (only configuration tested); needs nothing installed (standard library only, [ADR-0003](../architecture/ADR/ADR-0003-phase0-spike-toolchain.md)). From `scripts/phase0_synthetic/`:
@@ -12,9 +12,11 @@ python -m phase0.run study --first-seed 20261100 --n-seeds 10 --days 300
 All data are **synthetic**; run records go to the git-ignored `experiments/phase0_synthetic/`. This is not the product environment — that is still undecided (DEC-015).
 
 ## What is true today
-- The repository contains documentation, directory placeholders and templates only.
-- A Git repository exists in this folder with **no commits** (not created by the foundation run, which made no Git changes). Committing is the owner's decision.
-- There is no product code to build, run, or test; only the synthetic spike above is runnable.
+- The repository contains documentation, the Phase 0 synthetic spike, the `volatility_lab` research package with its tests, a read-only standard-library research API and a static 2D viewer (no 3D, no framework: DEC-007/008).
+- A Git repository exists with commits made by the owner. Git operations (commit, push, branch) are the owner's alone; agents do not perform them.
+- **Execution policy (owner-stated, `orchestration/DECISIONS.md` OD-7; not yet recorded in `decision.md`, AP-006 pending):** project code is run in Google Colab, not on the owner's PC; local sessions read and edit only.
+- Backend suite, as run in Colab on 2026-10-21 (Linux, Python 3.13.x, numpy 2.1.3; results and caveats in `orchestration/reports/COLAB_VERIFICATION.md` Addenda 7 and 11): `cd backend && PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .` gave 278 tests OK (1 GPU test skipped on CPU, executed on a T4). The same command is the one in `.github/workflows/tests.yml`, which has never run on a GitHub runner.
+- Research API (`backend/src/volatility_lab/api/server.py`): `--root` (directory with one sub-directory per run, required) and `--port` (default 8765), loopback only, read-only. The exact start command was not separately verified here; live-server probes were run in Colab (Addendum 11).
 
 ## To be completed when Phase 1 starts
 | Section | Content to add | Blocked by |

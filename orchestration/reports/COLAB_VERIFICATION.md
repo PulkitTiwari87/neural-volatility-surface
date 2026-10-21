@@ -372,3 +372,64 @@ Supersedes the page-level verdicts of Addenda 13–14, which cover the earlier p
 
 ## Verdict and residuals
 **UI ruling: PASS on synthetic fixtures** (label, 3D, errors, identifiers, null cells, tabs/keyboard, legacy URL, labelling of E-1/E-2/hosted content). **Minor residuals, left unedited (not owner-requested):** the link text "Read E-1 figures", the document title "Hosted dataset assessment", step name "Hosted files". Not covered: forecast views with null predictions, narrow viewports, other browsers, server-down state, accessibility audit, a real-shaped run; CI not run. No data, SPY artifact, research inference or training; nothing committed or pushed.
+
+
+---
+# Addendum 16 — AP-007: Playwright re-check of the CURRENT `frontend/index.html`, sha256 `783c27a99b5040e18f523421a6b45685849510b216031670734106b6de29dc5a` (2026-10-21 project date; runtime clock 2026-10-20 21:05–21:06 UTC; observation only)
+Supersedes the page-level verdicts of Addendum 15 for the **current** page; Addendum 15 remains the record for `33fdd70f…`. Operated by the Manager of the multi-agent master run (Colab T4 runtime, Python 3.13.15, playwright 1.64.0, numpy 2.1.3; same runtime and synthetic run `65f3822c…1129` as Addenda 12–15).
+
+## Artifact identity
+| Step | Evidence |
+|---|---|
+| Edit applied locally | `frontend/index.html` is 99,102 bytes, sha256 `783c27a9…29dc5a` (recomputed locally 2026-10-21; pre-image `orchestration/patches/pre/index.html.pre-ui-residuals-2026-10-21` = `33fdd70f…c068c4cf`, verified by local `sha256sum`). Local diff vs the pre-image (CRLF-normalised) = exactly three label strings: "Hosted dataset assessment" → "Withdrawn hosted dataset assessment (historical)"; "Read E-1 figures" → "Read historical E-1 figures (withdrawn dataset)"; "Hosted files" → "Hosted files (withdrawn dataset)". |
+| Transfer | **Not uploaded as a file.** The staged Addendum 15 copy (`/content/ap012/ui_new2/index.html`, sha256 `33fdd70f…` re-verified in the runtime) was transformed in Colab by those three exact single-occurrence byte replacements into `/content/ap012/ui_new4/index.html`; every replacement asserted exactly one match. Resulting sha256 = `783c27a99b5040e18f523421a6b45685849510b216031670734106b6de29dc5a`, 99,102 bytes = the local file (**MATCH**). Identity rests on the hash equality, not on a byte-for-byte upload of the local file. |
+| Served page | The live server's HTTP response body for `/` hashes to the same `783c27a9…` (served via `create_server(…, frontend=…)` on 127.0.0.1:8771; the verified AP-004 tree's own `frontend/index.html` was not touched; its manifest re-check: 0 non-OK of 258 against `MANIFEST_ap004_final.sha256`). |
+
+## Procedure (existing conventions reused, only port/paths changed)
+Run A = the Addendum 15 Run A script (`ui_check_new3.py` with port 8771 / `ui_new4`), Run B = the independent-run script (`/content/ap007b/check2.py` with port 8771 / `ui_new4`). Copies: `/content/ap012/ui4/{serve4,checkA,checkB}.py`; raw results `/content/ap012/ui4/ui_check_new4.json`, `result4B.json`, screenshot `explorer4B.png` (runtime only; this addendum is the preserved record). Both scripts exited 0 (17 routes each); server stopped by SIGTERM (exit −15), 0 listeners on 8771, server log only `serving on ('127.0.0.1', 8771)`.
+
+## Results
+| Check | Observed | Verdict |
+|---|---|---|
+| JS page errors / console errors / failed requests | none / none / none (Run A and Run B) | PASS |
+| "Live from run" | 0 on every route, 0 in source; "Stored run data" 31 occurrences | PASS |
+| 3D / canvas | 0 `<canvas>` on every route; source has no `s3d`, `WebGL`, `getContext`, `three`, `Rotate` (the single `canvas` source hit is the forced-colors CSS keyword, as in Addendum 14); "3D" text only on the limitations route (L-15 states the view was removed) | PASS |
+| `?view=3d` fallback | hash change, `/?view=3d#…` and fresh load of `#/workbench/explorer?view=3d`: Heatmap selected, 216 cells, URL rewritten to `view=heatmap` | PASS |
+| `dudesurfin`, `OptionsDX`, `Kaggle` | 0 on every route and in source | PASS |
+| Null cells | `nonfinite` table: `nan`, `NaN`, `inf`, `-inf`, `Infinity`, `1e999`, empty → `—`; `7` and `hello` as written; explorer table 9 `—` cells, no NaN/undefined/null/Infinity text in the panel (Run B). Run A counted 3 occurrences of the string "NaN" across all routes; these are not inspected individually (inferred to be the fixture row label `NaN_upper`, not a cell value) | PASS (synthetic fixtures) |
+| Heatmap/Table, keyboard | tabs `Heatmap` (selected), `Table`; ArrowLeft → Heatmap focused, ArrowRight → Table focused and rendered; 216 heat cells, 36 missing | PASS |
+| Network | requests only to the local server; 0 external | PASS |
+| E-1/E-2/SPY/hosted labelling (heuristics of Runs A and B) | The three residuals of Addendum 15 (link text "Read E-1 figures", document title "Hosted dataset assessment", step name "Hosted files") are no longer flagged. Remaining flags: L-23 "SPY options are American-style…" (methodological limitation); experiments row "Tested one hypothesis from E-1" (row name carries "(historical)"); the generic field name "Dataset version" and one methodology sentence containing "dataset" (heuristic false positives) | PASS with minor residuals |
+
+## Verdict and limits
+**UI check for the current page `783c27a9…`: PASS on synthetic fixtures; uploaded: no (reconstructed by hash-verified replacement); Playwright ran: yes; result recorded: yes (this addendum).** Not covered: forecast views with null predictions, narrow viewports, other browsers, server-down state, accessibility audit, a real-shaped run, human review (UA-01…UA-14), CI. No data, SPY artifact, research inference or training; no source file changed; nothing committed or pushed by this run. Any further edit to `frontend/index.html` changes the hash and voids this result for the new file.
+
+
+---
+# Addendum 17 — frontend-reading backend tests on the current page `783c27a9…` (2026-10-21 project date; runtime clock 2026-10-20 ~21:10 UTC; Colab T4 machine, GPU hidden)
+Purpose: `frontend/index.html` changed after the archive tested in Addenda 7 and 11, and four backend test modules read or serve it. Agent E's local `sha256sum -c` of `MANIFEST_ap004_final.sha256` against the current tree (read-only, no code run) found 253 of 258 files matching; the 5 differing files are `CHANGELOG.md`, `decision.md`, `docs/engineering/CORE_STATUS.md`, `docs/research/KNOWN_LIMITATIONS.md` and `frontend/index.html`; **every file under `backend/src`, `backend/tests`, `scripts/` matched** (so the 278-test results cover the current source and tests byte-for-byte; the manifest excludes `orchestration/`, and `SPY_BASELINE_INVENTORY.md` is tracked but not in the manifest). Procedure: copy of the verified tree (`/content/ap012/tree_cur`) with `frontend/index.html` replaced by the staged `783c27a9…` file (hash re-verified), `cd backend && PYTHONPATH=src CUDA_VISIBLE_DEVICES= python -W error::ResourceWarning -m unittest -v tests.unit.test_viewer_static tests.unit.test_api_contract tests.unit.test_api tests.unit.test_api_edge_inputs`. Result: **Ran 40 tests in 4.604 s, OK, exit 0** (no skips shown). Scope: these 40 tests only, not the full suite; a full-suite rerun was not judged necessary because no source or test file changed since the 278-test runs. No data, no research inference or training.
+
+---
+# Addendum 18 — AP-018: backend and spike suites on the CURRENT working tree (2026-10-21; Colab **CPU** runtime; owner could not use a T4)
+Authorized by the owner in chat: upload the current tree, verify hashes, run the backend suite and the spike tests, record the result; no data, no research inference or training. This is the first run covering the tree as it stands after the later edits (Addenda 7 and 11 covered archive `d56b04bd…`).
+
+## Artifact identity
+Built locally by `git ls-files -co --exclude-standard` minus `orchestration/` (261 files; includes the new `storage/quote_store.py` and `tests/unit/test_quote_store.py`, the modified `config/settings.py`, `ingestion/optionsdx.py`, `validation/quotes.py`, and `frontend/index.html` `783c27a9…`). `worktree_current_2026-10-21.tar.gz` sha256 `beb9cf4b56a3337bac1ead19adb4d44141971e3a86b2ea88b522deb58aa36df9` = the value computed locally (**MATCH** in Colab; 261 files extracted into a fresh `/content/ap018/tree`). `MANIFEST_current.sha256` (`26bad089…5c39`) was **not uploaded**, so the per-file `sha256sum -c` check was **NOT RUN**; identity rests on the archive hash alone. Archive, manifest and file list are in `orchestration/colab_transfer/` (not committed).
+
+## Runtime
+Ubuntu 24.04.5, Python 3.13.16, numpy 2.1.3, pandas 2.2.3, scipy 1.16.3, pyarrow 23.0.1, torch 2.11.0+cpu, `cuda_available False`, 2 CPUs. No GPU (T4 not used).
+
+## Backend suite — **FAIL (1 failure, 1 skip)**
+`cd backend && CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .` → **Ran 291 tests in 322.020s — FAILED (failures=1, skipped=1), exit 1**; 0 "Warning" lines in the log; run concurrently with the spike suite on 2 CPUs.
+- **The failure:** `tests.unit.test_quote_store.QuoteStoreTests.test_config_hash_does_not_include_the_quote_policy` (`test_quote_store.py:87`): `assertNotIn("quote", json.dumps(Config().to_dict()).lower())` fails because the config JSON contains the existing key `SurfaceConfig.min_quotes_per_slice` (`config/settings.py:42`). The preceding assertion in the same test (line 86: `Config` fields are exactly data/surface/features/split/train) is not reported as failing. Reading: the new, untracked test's substring check is broader than its intent (the quote policy is not hashed into `Config`), so it cannot pass against the unchanged config key. This is a diagnosis from the traceback and source, not a separate run. **Not patched** (no source or test edits under this authorization); the owner/core session decides whether to narrow the assertion.
+- **The skip (1):** the run did not use `-v`, so the skipped test is not named in the log; expected to be the GPU plumbing test (`test_gpu_guard`), but **not confirmed**.
+- Net: 289 passed, 1 failed, 1 skipped of 291. The 278 OK of Addenda 7/11 is **not** the state of the current tree.
+
+## Spike suite — PASS
+`cd scripts/phase0_synthetic && PYTHONDONTWRITEBYTECODE=1 python -W error::ResourceWarning -m unittest discover -s tests -t .` → **Ran 145 tests in 65.848s, OK**, exit 0 (matches the 145 recorded earlier).
+
+## UI shown to the owner
+At the owner's request the viewer was served inside the Colab tab (`google.colab.output.serve_kernel_port_as_iframe`, port 8780) from the extracted tree: page sha256 `783c27a9…` (same as Addendum 16), labelled synthetic run `65f3822c…1129`, plus the `nonfinite` fixture table. `/` returned 200 and `/api/runs` listed the one synthetic run. No new Playwright run was made on this tree.
+
+## Not run / still open
+Per-file manifest check; T4 run (GPU plumbing test unverified for the current tree); `python -O` leakage guards; foundation audit; live-server API probes on this tree; CI. No data, SPY artifact, research inference or training; no source or test edited; nothing committed or pushed.

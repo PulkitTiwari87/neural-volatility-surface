@@ -110,7 +110,7 @@ Status of every requirement below: `PLANNED`. Phase = roadmap phase in [IMPLEMEN
 | DATA-006 | Market calendar (holidays, weekends, early closes, expiration conventions) and timestamp/timezone conventions are explicit and tested. | FACT | §8.7, §9 |
 | DATA-007 | Processed datasets are versioned and reproducible. | FACT | §8.9, §19 |
 | DATA-008 | The conceptual entities of MP §7 (underlying snapshot, option quote, market assumptions, derived IV observation, surface snapshot, forecast & experiment) are specified as formal schemas in the data dictionary once provider is chosen. | FACT | §7 |
-| DATA-009 | Initial market and underlying universe: one market, one underlying universe. **OPEN** (DEC-001). | FACT (requirement) / OPEN (value) | §2 |
+| DATA-009 | Initial market and underlying universe: one market, one underlying universe. **Interim value SPY (DEC-001, 2026-10-19, owner); not final.** | FACT (requirement) / OPEN (value) | §2 |
 
 ## 7. UI requirements
 
@@ -119,7 +119,7 @@ Details in [design.md](design.md) (canonical for UI behaviour) and [docs/design/
 | ID | Requirement | Basis | MP ref | Phase |
 |---|---|---|---|---|
 | UI-001 | Eight primary sections: Overview, Surface Explorer, Forecast Lab, Backtesting, Research & Explainability, Data Quality, Experiments & Models, Methodology. | REC | §17 | 5 |
-| UI-002 | 3D surface explorer: rotate/pan/zoom; hover shows coordinates, IV, timestamp, data status; toggle observed/interpolated; expiration/moneyness slice; two-date comparison; camera reset. | FACT | §16A | 5 |
+| UI-002 | 3D surface explorer: rotate/pan/zoom; hover shows coordinates, IV, timestamp, data status; toggle observed/interpolated; expiration/moneyness slice; two-date comparison; camera reset. **DEFERRED by owner decision DEC-008 (2026-10-20): no 3D; the static viewer offers heatmap and table views instead.** | FACT | §16A | 5 |
 | UI-003 | Actual vs. forecast: side-by-side, overlay, difference surface (forecast − observed); choose origin, target date, model version; label historical backtest vs. prospective forecast. | FACT | §16B | 5 |
 | UI-004 | Surface evolution animation in chronological order; interpolated points never imply observations. | FACT | §16C | 5 |
 | UI-005 | 2D slices/heatmaps: smile, term structure, error heatmap, quote-quality heatmap, difference heatmap, ATM/skew/curvature time series. | FACT | §16D | 5 |
@@ -139,7 +139,7 @@ Details in [design.md](design.md) (canonical for UI behaviour) and [docs/design/
 | NFR-002 | Historical backtests are reproducible from saved data + configuration (deterministic where feasible). | FACT | §5, §21, §24 |
 | NFR-003 | Frontend performs no heavy model training. | FACT | §5 |
 | NFR-004 | Long-running training/backtests/ingestion are asynchronous, with resource limits. | FACT | §20, §22 |
-| NFR-005 | Visualization downsamples/simplifies geometry as needed and never blocks the UI during loading. Quantitative targets `OPEN` until a feasibility test (DEC-008). | FACT (qualitative) / OPEN (numbers) | §16 |
+| NFR-005 | Visualization downsamples/simplifies geometry as needed and never blocks the UI during loading. Quantitative targets `OPEN` (DEC-008 is decided as a static 2D viewer, so the 3D feasibility test is moot; no performance targets are set). | FACT (qualitative) / OPEN (numbers) | §16 |
 | NFR-006 | Log ingestion, solver, training and API failures without leaking secrets; monitor data freshness and provider failures. | FACT | §20 |
 | NFR-007 | Separate frontend/backend configuration; environment-based configuration. | FACT | §20, §22 |
 | NFR-008 | Graceful handling of unavailable data and model failures. | FACT | §20 |

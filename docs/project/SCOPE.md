@@ -3,7 +3,7 @@
 **Status:** PROPOSED · **Source:** MP §2, §22, §23 · **Canonical for:** scope boundaries per release and phase · **Related:** [PR.md](../../PR.md) §2, [IMPLEMENTATION_PLAN](../../IMPLEMENTATION_PLAN.md)
 
 ## In scope — initial version (MP §2)
-- Historical option-chain ingestion for **one** clearly defined underlying and market (`OPEN`, DEC-001).
+- Historical option-chain ingestion for **one** clearly defined underlying and market (DEC-001: interim SPY for the private track, not final; the owner has also stated US and India as separate studies, `orchestration/DECISIONS.md` OD-2, not yet recorded in decision.md).
 - Calls and puts; strikes, expirations; bid/ask; last price, volume, open interest where available.
 - Underlying price and timestamp alignment; interest-rate and dividend assumptions where relevant.
 - IV calculation from valid quotes; surface construction across moneyness/strike and maturity.
@@ -31,4 +31,4 @@ Automated trade execution · personalized investment advice · profitability cla
 Anything not in a phase's scope goes to [OPEN_QUESTIONS](../planning/OPEN_QUESTIONS.md) or a proposal ([template](../templates/FEATURE_PROPOSAL_TEMPLATE.md)); it enters a phase only through a recorded decision. Scope creep toward live data, extra underlyings, or UI polish before the science is validated is explicitly discouraged.
 
 ## Open scope items
-Market/underlying (DEC-001); forecast horizons beyond next session (Phase 7); export formats (FR-018); public vs. private access (DEC-013).
+Market/underlying (DEC-001, interim SPY); forecast horizons beyond next session (Phase 7); export formats (FR-018). Public vs. private access is settled for now: DEC-013 (2026-10-20) is local research tool only, no public display.

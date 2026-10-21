@@ -5,7 +5,7 @@
 | Term | Definition |
 |---|---|
 | **Option chain** | The set of listed option contracts on an underlying, each with strike, expiration, call/put type and market observations (MP §3). |
-| **Underlying** | The asset on which options are written (e.g., an index, ETF, or stock). *Which one: OPEN (DEC-001).* |
+| **Underlying** | The asset on which options are written (e.g., an index, ETF, or stock). *Which one: DEC-001 interim (2026-10-19) SPY for the private track; the underlying dataset is no longer authorized (DEC-002) and the choice is not final.* |
 | **Quote** | A bid/ask (and optional last/volume/open-interest) observation for a contract at a timestamp. A quote is not an executable price. |
 | **Midpoint** | (bid + ask)/2; common starting price for IV but unreliable for illiquid contracts (MP §8). |
 | **Implied volatility (IV)** | The volatility that makes a pricing model's theoretical price equal an observed price. Inferred, not observed. |
@@ -13,15 +13,15 @@
 | **Solver status** | Outcome of IV solving: e.g., converged, price below lower bound, above upper bound, no bracket, max iterations, unsupported instrument. *Enum finalized in Phase 2.* |
 | **Theoretical price bounds** | No-arbitrage limits within which an option price must lie for IV to exist under the model. |
 | **Forward price (F)** | Underlying price adjusted for carry (rates, dividends) to the option's maturity. *Definition per DEC-004/005.* |
-| **Moneyness** | Strike relative to underlying/forward. Variants: K/S, ln(K/S), ln(K/F) *(convention OPEN, DEC-005)*. |
+| **Moneyness** | Strike relative to underlying/forward. Variants: K/S, ln(K/S), ln(K/F) *(convention DECIDED 2026-10-20, DEC-005: k = ln(K/F) as implemented)*. |
 | **Log-moneyness** | Natural log of the moneyness ratio (e.g., `ln(K/F)`). |
-| **Maturity / time to expiration (T)** | Remaining time to expiry in years under a documented day-count and calendar *(convention OPEN)*. |
+| **Maturity / time to expiration (T)** | Remaining time to expiry in years under a documented day-count and calendar *(convention DECIDED 2026-10-20, DEC-005: calendar days / 365, no trading-day or holiday calendar)*. |
 | **Day-count convention** | Rule converting dates to year fractions (e.g., ACT/365). |
 | **Volatility smile / skew** | IV as a function of strike/moneyness at fixed maturity; skew is its asymmetry/slope. |
 | **Term structure** | IV as a function of maturity at fixed moneyness. |
 | **Volatility surface** | IV over (moneyness, maturity). |
 | **Surface snapshot** | A standardized surface at one timestamp with grid, values, status mask, construction method and version. |
-| **Grid** | The fixed set of (moneyness, maturity) coordinates on which surfaces are standardized *(resolution OPEN, DEC-006)*. |
+| **Grid** | The fixed set of (moneyness, maturity) coordinates on which surfaces are standardized *(DECIDED 2026-10-19, DEC-006 option A: 6 tenors x 9 log-moneyness nodes)*. |
 | **Cell status** | `observed` (from eligible quote), `interpolated` (between observed points by named method), `extrapolated` (outside the observed hull), `missing` (no reliable value). |
 | **Observed hull** | Region of coordinate space spanned by observed points; basis for deciding interpolation vs extrapolation. |
 | **ATM IV, skew, curvature, term-structure slope** | Surface summaries defined precisely in [FEATURE_CATALOG](../research/FEATURE_CATALOG.md). |

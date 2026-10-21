@@ -1,8 +1,9 @@
-# PROPOSED (2026-10-16), UNVERIFIED on a runner: it has NEVER run on GitHub Actions. Local evidence only: the
-# suites pass on Windows / Python 3.12.6 with numpy 1.26 / pandas 2.1, and (2026-10-20) a clean venv with the latest
-# unpinned numpy 2.5.4 / pandas 3.0.6 / scipy 1.18.1 / pyarrow 26.0.0 passed all 252 backend tests (1 CUDA test
-# skipped), plus the lint, the python -O leakage step, the 145 spike tests and the audit, each run locally. That
-# simulates the install step on Windows; it is not a Linux or runner result.
+# PROPOSED (2026-10-16), UNVERIFIED on a runner: it has NEVER run on GitHub Actions. Evidence is local/Colab only:
+# the suites passed on Windows / Python 3.12.6 with numpy 1.26 / pandas 2.1, and (2026-10-20) a clean venv with the
+# latest unpinned numpy 2.5.4 / pandas 3.0.6 / scipy 1.18.1 / pyarrow 26.0.0 passed 252 backend tests (1 CUDA test
+# skipped; 252 is the PC-era count), plus the lint, the python -O leakage step, the 145 spike tests and the audit.
+# After AP-004 the backend suite has 278 tests: recorded Colab results (orchestration/reports/COLAB_VERIFICATION.md)
+# are 278 OK + 1 skipped on Colab CPU and 278 OK, 0 skipped on Colab T4. None of these is a GitHub-runner result.
 # This workflow does NOT decide the Python toolchain (DEC-015 is OPEN): it installs the same four libraries the
 # package already imports, unpinned, only to run the synthetic-only tests. Delete or amend it freely.
 # No secrets, no market data, no network calls other than package install. GPU tests skip on CPU runners.

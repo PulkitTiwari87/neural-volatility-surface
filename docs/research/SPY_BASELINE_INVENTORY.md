@@ -2,7 +2,7 @@
 
 **Status:** IMPLEMENTED as a documentation inventory, 2026-10-21. Built **only** from repository files; no model, test, inference, download or hash of external data was run. Values not found in the repository are written `not recorded`. Nothing here is independently reproduced ([KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md) L-29).
 
-**Policy it supports:** OR-D2 in [orchestration/DECISIONS.md](../../orchestration/DECISIONS.md) — preserve, never retrain automatically. **Usage status:** withdrawn by the owner on 2026-10-20 ([decision.md](../../decision.md) DEC-002), then narrowly amended on 2026-10-21 (DEC-002-A, awaiting owner confirmation): private local Colab use of these held artifacts is permitted in principle, each run separately authorized; no export, public display, hosting or new data. Preserving an artifact is not authorization to run it. Artifacts are frozen: no retraining, regeneration or overwrite.
+**Policy it supports:** OR-D2 in [orchestration/DECISIONS.md](../../orchestration/DECISIONS.md) — preserve, never retrain automatically. **Usage status:** withdrawn by the owner on 2026-10-20 ([decision.md](../../decision.md) DEC-002), then narrowly amended on 2026-10-21 (DEC-002-A, wording confirmed by the owner 2026-10-21, AP-011 / OR-D7; first written as awaiting confirmation): private local Colab use of these held artifacts is permitted in principle, each run separately authorized; no export, public display, hosting or new data. Preserving an artifact is not authorization to run it. Artifacts are frozen: no retraining, regeneration or overwrite.
 
 ## 1. Dataset
 | Item | Value | Source |
@@ -52,3 +52,5 @@
 - **Reported historical results:** the E-1/E-2/H1–H6 numbers above (descriptive, one run each).
 - **600-origin minimum:** [PHASE0_FEASIBILITY_PLAN](PHASE0_FEASIBILITY_PLAN.md) M3/M4 derive it as "roughly 600 test origins from ≥ 2,000 snapshots" and state it is *a floor, not a guarantee of power*. A statistical justification for 600 specifically is **unresolved** (D's review: "underpowered in advance"; AP-008).
 - **Unresolved:** any fixed-expiry vs nearest-expiry primary-scoring choice (AP-008); effect-size and multiplicity treatment of the pass rule.
+
+**Update 2026-10-21 (AP-008 approved by the owner):** the 600-origin minimum is retained as a disclosed convention, not a power guarantee, and the pilot-measured N* is binding; contract-level scoring against plain and maturity-aware benchmarks with a predefined nearest-expiry fallback is the primary protocol for a future authorized evaluation; a prespecified minimum meaningful effect, one primary contrast per stage with a trial ledger apply, and S-5 stays inside the PA-1 closure (not run). The statements above about the justification and the primary scoring being unresolved are history. Record: decision.md "AP-008". Nothing here changes the archived H1-H6 results or authorizes a run.

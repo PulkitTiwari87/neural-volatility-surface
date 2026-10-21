@@ -92,3 +92,16 @@ class Config:
     def sha256(self) -> str:
         blob = json.dumps(self.to_dict(), sort_keys=True, default=list).encode()
         return hashlib.sha256(blob).hexdigest()
+
+
+@dataclass(frozen=True)
+class QuotePolicy:
+    """Quote-persistence settings (STORAGE_DESIGN 8.8 D9). Deliberately NOT a field of ``Config``: adding it there
+    would change ``Config.sha256()``, every dataset ``version_id`` and every ``run_key``. Its hash enters only the
+    quote-set id."""
+    schema: str = "quote-set-1"
+    # rebuild check on derived floats (D4): must exceed the 1.7e-14 cross-platform drift measured in L-34
+    rebuild_rel_tol: float = 1e-9
+
+    def sha256(self) -> str:
+        return hashlib.sha256(json.dumps(dataclasses.asdict(self), sort_keys=True).encode()).hexdigest()

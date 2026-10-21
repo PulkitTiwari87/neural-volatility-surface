@@ -193,3 +193,7 @@ From `scripts/phase0_synthetic/` (nothing is installed): tests `python -m unitte
 
 ### 9.6 Limitations declared in advance
 Strikes are placed on a fixed moneyness grid so grid nodes can be matched exactly — real chains have fixed *price* strikes, so a proximity rule for `observed` will be needed (DEC-006); the factor structure is simple and known to the AR forecaster; there is no microstructure, no stale quotes, no per-contract timestamps, no AM/PM settlement mix; the constant rate is known; one underlying; one random-number generator. The synthetic worlds can validate the **pipeline's logic and detection ability** — they say nothing about real markets or real data quality.
+
+> **Note 2026-10-21 (AP-008, owner-approved):** M4 stays a disclosed convention (600 origins is not an evidence-based power guarantee); the pilot-measured N* (from c and rho, S9) is binding once measured. r* (PROPOSED 3 percent in section 3.2) is still unfrozen. See decision.md "AP-008".
+
+> **Note 2026-10-21 (tension flagged, not resolved):** the "Evidence rule" above (95 % interval excluding zero) predates the PA-1 closure; no validated interval method exists (PHASE0_CLOSURE_RECORD section 7 item 4, L-22), so the interval clause is a labelled screening statistic only. AP-008 (c) governs effect size and multiplicity (one primary contrast per stage, trial ledger) and makes no size or coverage claim. r* and the N* formula inputs (c, rho) remain unfrozen; see the specification-status table in decision.md "AP-008".

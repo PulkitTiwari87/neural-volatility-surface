@@ -168,4 +168,4 @@ Update this table whenever a component moves beyond `PLANNED`.
 
 ## 15. Open decisions affecting architecture
 
-DEC-002 (provider), DEC-004/005/006 (pricing/coordinates/grid), DEC-007 (API framework), DEC-008 (frontend/3D), DEC-009 (storage), DEC-010 (tracking), DEC-013 (deployment), DEC-015 (toolchain). Status and evidence: [decision.md](decision.md).
+Still open or only proposed (decision.md, 2026-10-21): DEC-002 (provider), DEC-004 (pricing), DEC-009 (storage), DEC-010 (tracking), DEC-011/012 (forecast representation, architecture), DEC-015 (toolchain). Decided by the owner: DEC-005 (coordinates), DEC-006 (grid), DEC-007 (stdlib API), DEC-008 (static 2D, no 3D) and DEC-013 (local only, no deployment). Status and evidence: [decision.md](decision.md).

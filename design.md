@@ -1,6 +1,6 @@
 # design.md — Product and Interaction Design Specification
 
-**Status:** PROPOSED. Specification only: **no frontend exists, no brand assets are defined, and no framework is chosen** (DEC-008). Colors, fonts and layouts below are semantic rules and constraints, not final visual design.
+**Status:** PROPOSED. Specification; a static 2D research viewer (`frontend/index.html`) implements part of it. **No brand assets are defined; DEC-008 was DECIDED 2026-10-20 (owner): static 2D viewer, no 3D, no frontend framework**, so the 3D passages below are retained as the original specification but are out of scope (see PR.md UI-002). Colors, fonts and layouts below are semantic rules and constraints, not final visual design.
 **Canonical for:** UI behaviour, information hierarchy, status semantics, chart conventions, UI acceptance criteria.
 **Related:** [PR.md](PR.md) UI-001…012 · [docs/design/DESIGN_SYSTEM.md](docs/design/DESIGN_SYSTEM.md) (tokens & components) · [docs/design/INFORMATION_ARCHITECTURE.md](docs/design/INFORMATION_ARCHITECTURE.md) · [docs/design/VISUALIZATION_SPEC.md](docs/design/VISUALIZATION_SPEC.md) (per-chart specs) · [docs/design/ACCESSIBILITY.md](docs/design/ACCESSIBILITY.md) · [guardrails.md](guardrails.md) GR-PRD · MP §16–§17
 

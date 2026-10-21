@@ -16,6 +16,8 @@
 
 ## 2. Per-phase state (2026-10-16)
 
+> **Dated note 2026-10-21:** this table is the 2026-10-16 snapshot and is kept as history. Current phase states are in §11. In particular Phase 6 is no longer plain `PLANNED`: engineering checks have been run in Colab (§11), so it is `PARTIAL`; the CI workflow has still never run on a runner.
+
 | Phase | Status | Implemented (code) | Evidence / tests | Exit gate | External dependencies | Owner decisions needed |
 |---|---|---|---|---|---|---|
 | F Foundation | `ACCEPTED` (owner, 2026-10-19) | docs scaffold; `scripts/foundation_audit.py` | [FOUNDATION_AUDIT](FOUNDATION_AUDIT.md): all mechanical checks pass | **MET** (owner accepted; "no code" criterion superseded) | none | none |
@@ -164,7 +166,7 @@ Legend: **MET-L** = met locally by a deterministic offline test on synthetic dat
 
 Not run: CI on a runner (**never run**), any GPU test, `run_neural` end to end, the UA-01…UA-14 journeys, any real-data ingest, any notebook. Two earlier attempts to run three suites at once were stopped by hand because thread oversubscription made them far slower than a solo run (not a test failure).
 
-**Findings for the UI workstream (not edited here):** the viewer labels data read from a stored run **"Live from run"** (`frontend/index.html`, `src("live")`); GR-DATA-07 reserves "live" for real-time licensed data, so the wording can mislead and should be renamed (for example "From run files"). **Findings fixed in core:** `verify_dataset` crashed on a malformed report (found by its own test); `daily_mae` emitted a spurious `RuntimeWarning` on days without evaluable cells.
+**Findings for the UI workstream (not edited here; the "Live from run" label has since been renamed "Stored run data" and checked under Playwright, see §11 and KNOWN_LIMITATIONS L-33):** the viewer labels data read from a stored run **"Live from run"** (`frontend/index.html`, `src("live")`); GR-DATA-07 reserves "live" for real-time licensed data, so the wording can mislead and should be renamed (for example "From run files"). **Findings fixed in core:** `verify_dataset` crashed on a malformed report (found by its own test); `daily_mae` emitted a spurious `RuntimeWarning` on days without evaluable cells.
 
 ## 10. AP-004 patches 2–4 and first Colab verification (2026-10-21; owner-approved; earlier sections unchanged)
 
@@ -179,4 +181,35 @@ Not run: CI on a runner (**never run**), any GPU test, `run_neural` end to end, 
 
 **Verification actually run (Colab, **not** the PC; CPU runtime, Python 3.13.16, numpy 2.1.3, pandas 2.2.3, scipy 1.16.3, torch 2.11.0+cpu; snapshot `worktree_ap004_2026-10-21.tar.gz` sha256 `d85e2e30…3dce`, manifest of 258 files all OK):** full backend suite `CUDA_VISIBLE_DEVICES= PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests -t .` → **278 tests, OK, 1 skipped** (the CUDA plumbing test; no GPU on that runtime), exit 0, 191.7 s. 278 = the previous 252 + 26 new. Earlier Colab records stand: backend 252 OK on a T4 runtime (the GPU test then executed), Phase 0 spike 145 OK, `-O` leakage 9 OK, foundation audit exit 0 (two git checks not evaluated), manifest 255 OK, P2 and P4 as recorded in `orchestration/reports/COLAB_VERIFICATION.md` (Addenda 1–7). Counts quoted in older sections of this file (110/158/179/252) are historical PC-side figures.
 
-**Still not run / open:** P1 and the NumPy 1.26 comparison (need Python 3.12 in Colab; they decide Patch 1), the GPU plumbing test on this snapshot, a live-server P2 re-run after Patch 3, CI on a runner, C-12/C-13/C-09 and the other reviewed findings not in AP-004 scope. No phase gate changes; S1 remains in review.
+**Still not run / open (as of this section's date; the GPU plumbing test, a live-server P2 re-run and the P1/NumPy 1.26 comparison have since been run, see §11):** P1 and the NumPy 1.26 comparison (need Python 3.12 in Colab; they decide Patch 1), the GPU plumbing test on this snapshot, a live-server P2 re-run after Patch 3, CI on a runner, C-12/C-13/C-09 and the other reviewed findings not in AP-004 scope. No phase gate changes; S1 remains in review.
+
+## 11. Current engineering status (2026-10-21; supersedes the dated counts in §3, §7, §9 and §10, which stay as history)
+
+Vocabulary: PASS, PARTIAL, BLOCKED, NOT VERIFIED, NOT REQUESTED, NOT AUTHORIZED, DEFERRED, COMPLETE. Nothing below is a phase gate pass, and no real-data result is involved: every check here used synthetic fixtures.
+
+**Repository state.** HEAD `cd8d246` (the owner's local commit "changes", 2026-10-21 02:28); the working tree was clean when this reconciliation started. Nothing is known to have been pushed (AP-005 NOT REQUESTED). **CI (`.github/workflows/tests.yml`) has NEVER run on a runner**; local and Colab passes are not CI passes.
+
+**Colab evidence** ([COLAB_VERIFICATION](../../orchestration/reports/COLAB_VERIFICATION.md)):
+- Addendum 1: backend suite **252 OK** on the first Colab run (original archive). Phase 0 spike **145 OK**, `-O` leakage **9 OK**, foundation audit exit 0 (two git checks not evaluated), manifest **255 OK** (Addendum 3).
+- Addendum 7: AP-004 Patches 2-4 applied and verified, CPU runtime **278 OK, 1 skipped**.
+- Addendum 11 (final AP-004 archive, sha256 `d56b04bd5875a6199871b84f9fbdae2b1da9d5dbc1b460ce1c08808625db6236`, 258/258 manifest OK): CPU suite (GPU hidden) **278 OK, 1 skipped, exit 0, 198.5 s**; live-server probes **PASS** (HEAD/OPTIONS/POST 405, foreign Host 400, non-finite CSV cell to JSON `null`); T4 suite **278 OK, 0 skipped** (GPU plumbing test executed), 207.1 s; one benign warning at `neural.py:138` (not changed).
+- Patch 1 (dtype/manifest): CLOSED by the owner, never implemented. PC-vs-Linux float drift (max 1.7e-14 absolute): UNRESOLVED, informational (OR-D9).
+
+**UI (`frontend/index.html`).** Addendum 15 PASS covers page `33fdd70f…c068c4cf` only (synthetic fixtures). The current page is `783c27a9…29dc5a`; it differs from `33fdd70f` only by three label edits marking withdrawn-dataset text as historical. **Current page: Playwright re-check PASS on synthetic fixtures (COLAB_VERIFICATION Addendum 16; 40 frontend-reading backend tests also OK on the current page, Addendum 17).** UA-01…UA-14 NOT RUN; human review not done.
+
+**Phase states now** (gates not claimed; one shared vocabulary):
+
+| Phase | State |
+|---|---|
+| F | COMPLETE (accepted by the owner 2026-10-19) |
+| 0 | PARTIAL: synthetic spike done; real-data items BLOCKED / NOT TESTED; MVD thresholds owner-adopted 2026-10-20, not evidence-based; inference audit CLOSED, NO-GO |
+| 1 | PARTIAL |
+| 2 | PARTIAL (DEC-006 option A decided 2026-10-19; A5 replacement rule still pre-registration-only) |
+| 3 | PARTIAL / BLOCKED (no real data authorized) |
+| 4 | PARTIAL / BLOCKED (no training or inference authorized; AP-003 NOT REQUESTED; H1-H6 are exploratory history, test years reused; the fixed-expiry GRU result, verdict `holds_under_fixed_expiry_label_only`, is not a general improvement and no edge over the PCA-ridge baseline is interpretable) |
+| 5 | PARTIAL (UA-01…UA-14 not run; human review not done; current page `783c27a9` Playwright PASS on synthetic fixtures, Addenda 16-17) |
+| 6 | PARTIAL: engineering checks run in Colab (above), CI NEVER run, no release checklist sign-off |
+| 7 | DEFERRED |
+
+## 12. Owner decision of 2026-10-21 (AP-008; recorded from chat)
+AP-008 approved in full: contract-level scoring against the plain (B0a) and maturity-aware (B0b) benchmarks with a predefined nearest-expiry fallback; 600 origins as a disclosed convention with the pilot-measured N* binding; a prespecified minimum meaningful effect r*, one primary contrast per stage, a trial ledger, and S-5 kept inside the PA-1 closure (not run). Numeric r*, the fallback coverage threshold, N*, c, rho and the code for B0b / contract-level scoring remain open; contract-level scoring also needs a storage decision because the stored panel holds grid cells only. No phase gate changes; nothing was run. Record: decision.md "AP-008", orchestration/APPROVALS.md AP-008, orchestration/DECISIONS.md OR-D10.

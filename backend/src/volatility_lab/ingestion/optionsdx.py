@@ -147,8 +147,13 @@ def _to_date_days(col: pd.Series) -> np.ndarray:
     return parsed.values.astype("datetime64[D]").astype("int64")  # NaT -> iinfo.min
 
 
-def prefilter_batch(df: pd.DataFrame, cfg: DataConfig, ledger: RejectLedger) -> pd.DataFrame:
-    """Normalise one raw batch and drop rows that cannot be used, recording why."""
+def prefilter_batch(df: pd.DataFrame, cfg: DataConfig, ledger: RejectLedger,
+                    unusable: Optional[list] = None) -> pd.DataFrame:
+    """Normalise one raw batch and drop rows that cannot be used, recording why.
+
+    ``unusable`` (optional list): rows rejected as ``no_usable_side`` (valid identity, no usable quote on either side)
+    are appended to it as a frame, for quote persistence (STORAGE_DESIGN 8.8 D5). The returned frame is unchanged.
+    """
     df = df.rename(columns={c: normalize_name(c) for c in df.columns})
     missing = [c for c in REQUIRED if c not in df.columns]
     if missing:
@@ -174,6 +179,12 @@ def prefilter_batch(df: pd.DataFrame, cfg: DataConfig, ledger: RejectLedger) -> 
     ledger.note_dates(d, first, PREFILTER_REASONS)
     keep = first == 0
     ledger.kept += int(keep.sum())
+    if unusable is not None:
+        bad = first == PREFILTER_REASONS.index("no_usable_side") + 1
+        u = pd.DataFrame({"date": d[bad].astype(np.int32), "expiry": e[bad].astype(np.int32)})
+        for c in ("strike", "underlying_last", "c_bid", "c_ask", "p_bid", "p_ask"):
+            u[c] = num[c][bad]
+        unusable.append(u.rename(columns={"underlying_last": "spot"}))
     out = pd.DataFrame({"date": d[keep].astype(np.int32), "expiry": e[keep].astype(np.int32)})
     for c in ("strike", "underlying_last", "c_bid", "c_ask", "p_bid", "p_ask"):
         out[c] = num[c][keep]
@@ -196,10 +207,16 @@ def _iter_raw_batches(path: Path, batch_rows: int) -> Iterable[pd.DataFrame]:
             yield chunk
 
 
-def load_wide(paths: Sequence[Path], cfg: DataConfig, *, max_rows: Optional[int] = None):
-    """Stream all files, returning ``(wide_frame, ledger)``. ``max_rows`` is for smoke tests only."""
+def load_wide(paths: Sequence[Path], cfg: DataConfig, *, max_rows: Optional[int] = None,
+              return_unusable: bool = False):
+    """Stream all files, returning ``(wide_frame, ledger)``. ``max_rows`` is for smoke tests only.
+
+    ``return_unusable=True`` adds a third item: the ``no_usable_side`` rows (see ``prefilter_batch``); the first two
+    items are unchanged.
+    """
     ledger = RejectLedger()
     parts = []
+    unusable = [] if return_unusable else None
     seen = 0
     for p in paths:
         for raw in _iter_raw_batches(Path(p), cfg.batch_rows):
@@ -208,11 +225,13 @@ def load_wide(paths: Sequence[Path], cfg: DataConfig, *, max_rows: Optional[int]
             if max_rows is not None:
                 raw = raw.iloc[: max_rows - seen]
             seen += len(raw)
-            parts.append(prefilter_batch(raw, cfg, ledger))
+            parts.append(prefilter_batch(raw, cfg, ledger, unusable))
     if not parts:
         raise SchemaError("no rows were read")
     wide = drop_duplicates_with_ledger(pd.concat(parts, ignore_index=True), ledger)
     ledger.check()
+    if return_unusable:
+        return wide, ledger, pd.concat(unusable, ignore_index=True)
     return wide, ledger
 
 

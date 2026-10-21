@@ -197,3 +197,5 @@ Open: owner decision on next steps (see CORE_STATUS).
 2. ~~Approve the common decision rule~~ **Approved 2026-10-16** as the descriptive standard for any "improves on persistence" wording.
 3. For H2/H3: approve another owner-run Kaggle/Colab GPU session, or approve a local CUDA install (the assistant will not install it).
 4. DEC-012 (initial neural architecture) remains `PROPOSED`; nothing here decides it.
+
+> Note 2026-10-21: the descriptive decision rule in this review governs the archived H1-H6 records only; the primary protocol for any future authorized evaluation is AP-008(a), decision.md "AP-008". The archived verdicts are unchanged.

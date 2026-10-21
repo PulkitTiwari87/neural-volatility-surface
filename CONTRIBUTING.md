@@ -5,7 +5,7 @@
 ## Before you start
 
 - **Licence:** the software licence is undecided ([DEC-014](decision.md)). Until it is decided, external contributions are not accepted; internal work proceeds under the owner's direction.
-- **Version control:** a Git repository exists in this folder but has **no commits**. It was not created by the foundation run (which made no Git changes), and files are currently staged by something outside it. The first commit is the owner's decision. Branching/commit conventions below apply from then on.
+- **Version control:** a Git repository exists in this folder with commits made by the owner. Git operations (commit, push, branch, config) are the owner's alone; agents never perform them. Branching/commit conventions below apply to the owner's commits.
 - Find the current phase and its scope in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Work outside the active phase needs an explicit decision.
 
 ## Ground rules

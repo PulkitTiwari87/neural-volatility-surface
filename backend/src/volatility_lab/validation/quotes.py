@@ -69,8 +69,13 @@ def estimate_forwards(wide: pd.DataFrame, cfg: DataConfig) -> pd.DataFrame:
     return out.set_index(["date", "expiry"])
 
 
-def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig):
-    """Return ``(quotes, ledger, diagnostics)``; see module docstring."""
+def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig, *, return_rows: bool = False):
+    """Return ``(quotes, ledger, diagnostics)``; see module docstring.
+
+    ``return_rows=True`` (Q-D5 quote persistence, STORAGE_DESIGN 8.8) also returns a fourth item: one row per input
+    row (wide order) with its terminal disposition, so excluded quotes keep their reason. The first three items are
+    computed exactly as without the flag.
+    """
     ledger = RejectLedger()
     ledger.rows_in = len(wide)
     fw = estimate_forwards(wide, cfg)
@@ -120,13 +125,13 @@ def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig):
     ledger.note_dates(df.date.to_numpy(), terminal, QUOTE_REASONS)
 
     sel = np.flatnonzero(ok)[in_bounds]
+    # GR-QNT-03: per-quote solver residual, |model_price(iv) - undiscounted mid| / F (decimal of forward)
+    reprice = np.abs(bs.black76_price(F[sel], K[sel], T[sel], iv[in_bounds], is_call[sel]) - mid[sel] / DFv[sel]) / F[sel]
     quotes = pd.DataFrame({
         "date": df.date.to_numpy()[sel], "expiry": df.expiry.to_numpy()[sel], "T": T[sel],
         "strike": K[sel], "k": k[sel], "iv": iv[in_bounds], "is_call": is_call[sel], "mid": mid[sel],
         "rel_spread": rel[sel], "F": F[sel], "DF": DFv[sel], "spot": S[sel], "vendor_iv": vend[sel],
-        # GR-QNT-03: per-quote solver residual, |model_price(iv) - undiscounted mid| / F (decimal of forward)
-        "reprice_err": np.abs(bs.black76_price(F[sel], K[sel], T[sel], iv[in_bounds], is_call[sel])
-                              - mid[sel] / DFv[sel]) / F[sel],
+        "reprice_err": reprice,
     }).sort_values(["date", "expiry", "strike"], kind="mergesort").reset_index(drop=True)
     ledger.check()
 
@@ -149,4 +154,19 @@ def build_otm_quotes(wide: pd.DataFrame, cfg: DataConfig):
         "vendor_iv_median_ratio_vendor_over_ours": float(np.median(vv[good] / ours[good])) if good.any() else None,
         "vendor_iv_median_abs_diff_decimal": float(np.median(np.abs(vv[good] - ours[good]))) if good.any() else None,
     }
-    return quotes, ledger, diag
+    if not return_rows:
+        return quotes, ledger, diag
+    n = len(df)
+    iv_all, status_all, rep_all = np.full(n, np.nan), np.full(n, -1, dtype=np.int16), np.full(n, np.nan)
+    pos = np.flatnonzero(ok)
+    iv_all[pos], status_all[pos] = iv, status            # -1 = solver not attempted (rejected before solving)
+    rep_all[sel] = reprice
+    rows = pd.DataFrame({
+        "date": df.date.to_numpy(), "expiry": df.expiry.to_numpy(), "strike": K, "spot": S, "T": T,
+        "F": F, "DF": DFv, "k": k, "otm_is_call": is_call, "c_bid": df.c_bid.to_numpy(), "c_ask": df.c_ask.to_numpy(),
+        "p_bid": df.p_bid.to_numpy(), "p_ask": df.p_ask.to_numpy(), "c_iv": df.c_iv.to_numpy(dtype=float),
+        "p_iv": df.p_iv.to_numpy(dtype=float), "mid": mid, "rel_spread": rel, "iv": iv_all,
+        "solver_status": status_all, "reprice_err": rep_all,
+        "reason": np.array([None, *QUOTE_REASONS], dtype=object)[terminal],
+    })
+    return quotes, ledger, diag, rows

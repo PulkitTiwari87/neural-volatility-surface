@@ -1,6 +1,6 @@
 # Deployment
 
-**Status:** DEFERRED to Phase 6 — **target undecided** (DEC-013). No deployment artifacts exist, and none should be created earlier. · **Source:** MP §20, §22 · **Related:** [SECURITY](../engineering/SECURITY.md), [OBSERVABILITY](../engineering/OBSERVABILITY.md), [RECOVERY](RECOVERY.md), [CONFIGURATION](CONFIGURATION.md)
+**Status:** DEFERRED — **DEC-013 DECIDED 2026-10-20 (owner): none, local research tool only** (no deployment, no authentication, no public display); a hosted or public release would need a new decision plus a licence resolution (AP-010: NOT AUTHORIZED). No deployment artifacts exist, and none should be created. · **Source:** MP §20, §22 · **Related:** [SECURITY](../engineering/SECURITY.md), [OBSERVABILITY](../engineering/OBSERVABILITY.md), [RECOVERY](RECOVERY.md), [CONFIGURATION](CONFIGURATION.md)
 
 ## 1. Preconditions (MP §22: "Deployment should follow successful local validation and data licensing review")
 - Phases 0–5 gates passed; reproducible local historical workflow.

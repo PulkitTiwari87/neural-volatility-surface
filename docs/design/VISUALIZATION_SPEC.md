@@ -1,6 +1,6 @@
 # Visualization Specification
 
-**Status:** PROPOSED (no library chosen; DEC-008) · **Source:** MP §15–§16 · **Canonical for:** per-visualization specs (data, encodings, interactions, alternatives, tests) · **Parent:** [design.md](../../design.md) · **Related:** [DESIGN_SYSTEM](DESIGN_SYSTEM.md), [ACCESSIBILITY](ACCESSIBILITY.md), PR.md UI-002…009
+**Status:** PROPOSED. DEC-008 DECIDED 2026-10-20 (owner): static 2D viewer, no 3D, no frontend framework; **V1 (3D surface) below is out of scope and not built**; the 2D views are partly implemented in `frontend/index.html` · **Source:** MP §15–§16 · **Canonical for:** per-visualization specs (data, encodings, interactions, alternatives, tests) · **Parent:** [design.md](../../design.md) · **Related:** [DESIGN_SYSTEM](DESIGN_SYSTEM.md), [ACCESSIBILITY](ACCESSIBILITY.md), PR.md UI-002…009
 
 Common to all: context bar visible; axes with units/conventions; status encoding per design.md §8; tooltip fields per design.md §10; table/2D alternative; states per design.md §9; values originate from the API (UA-01).
 
