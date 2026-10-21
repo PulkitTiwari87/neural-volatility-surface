@@ -158,6 +158,24 @@ class ApiTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             create_server(self.root, host="0.0.0.0", port=0)
 
+    def test_public_bind_needs_allowed_host_and_checks_host_header(self):
+        srv = create_server(self.root, host="127.0.0.1", port=0, allow_hosts=(".example.org",))
+        t = threading.Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        try:
+            url = f"http://127.0.0.1:{srv.server_address[1]}/api/runs"
+            def get(host):
+                return urllib.request.urlopen(urllib.request.Request(url, headers={"Host": host}), timeout=10)
+
+            self.assertEqual(get("api.example.org").status, 200)
+            for bad in ("evil.com", "example.org.evil.com"):
+                with self.assertRaises(urllib.error.HTTPError) as cm:
+                    get(bad)
+                self.assertEqual(cm.exception.code, 400, bad)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
     def test_real_socket_get_ok_and_other_methods_405_with_security_headers(self):
         srv = create_server(self.root, port=0)
         t = threading.Thread(target=srv.serve_forever, daemon=True)

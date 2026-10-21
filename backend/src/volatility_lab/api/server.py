@@ -64,7 +64,12 @@ def dispatch(store: RunStore, raw_path: str, frontend: Path = FRONTEND) -> tuple
         return _json(500, {"error": "the run data could not be read"})
 
 
-def make_handler(store: RunStore, frontend: Path = FRONTEND):
+def _allowed(name: str, allow_hosts: tuple) -> bool:
+    """Loopback is always allowed; a public deployment must name its hosts (``.suffix`` matches subdomains)."""
+    return name in LOOPBACK or any(name == h or (h.startswith(".") and name.endswith(h)) for h in allow_hosts)
+
+
+def make_handler(store: RunStore, frontend: Path = FRONTEND, allow_hosts: tuple = ()):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, ctype: str, body: bytes, extra: dict) -> None:
             self.send_response(code)
@@ -76,13 +81,13 @@ def make_handler(store: RunStore, frontend: Path = FRONTEND):
             self.wfile.write(body)
 
         def _host_ok(self) -> bool:
-            """DNS-rebinding guard for a local-only tool: only a loopback name may address this server. An absent or
-            empty Host header (HTTP/1.0 clients) is allowed; the socket is loopback-bound regardless."""
+            """DNS-rebinding guard: only a loopback name or an explicitly allowed host may address this server. An
+            absent or empty Host header (HTTP/1.0 clients) is allowed."""
             host = (self.headers.get("Host") or "").strip().lower()
             if not host:
                 return True
             m = _HOST.match(host)
-            return bool(m) and (m.group(1) or m.group(2)) in LOOPBACK
+            return bool(m) and _allowed(m.group(1) or m.group(2), allow_hosts)
 
         def do_GET(self):  # noqa: N802
             if not self._host_ok():
@@ -100,19 +105,22 @@ def make_handler(store: RunStore, frontend: Path = FRONTEND):
     return Handler
 
 
-def create_server(root, host: str = "127.0.0.1", port: int = 8765, frontend: Path = FRONTEND) -> ThreadingHTTPServer:
-    if host not in LOOPBACK:
-        raise ValueError("refusing non-loopback bind: the API has no authentication (Phase 6 scope)")
-    return ThreadingHTTPServer((host, port), make_handler(RunStore(root), frontend))
+def create_server(root, host: str = "127.0.0.1", port: int = 8765, frontend: Path = FRONTEND,
+                  allow_hosts: tuple = ()) -> ThreadingHTTPServer:
+    if host not in LOOPBACK and not allow_hosts:
+        raise ValueError("refusing non-loopback bind without --allow-host: the API has no authentication (Phase 6 scope)")
+    return ThreadingHTTPServer((host, port), make_handler(RunStore(root), frontend, tuple(h.lower() for h in allow_hosts)))
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--root", required=True, help="directory containing one sub-directory per run")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--host", default="127.0.0.1", help="non-loopback needs --allow-host (public deployment of SYNTHETIC runs only)")
+    ap.add_argument("--allow-host", action="append", default=[], help="accepted Host name; '.suffix' matches subdomains")
     a = ap.parse_args()
-    srv = create_server(a.root, port=a.port)
-    print(f"serving {a.root} on http://127.0.0.1:{a.port}/ (read-only, local)")
+    srv = create_server(a.root, a.host, a.port, allow_hosts=tuple(a.allow_host))
+    print(f"serving {a.root} on http://{a.host}:{a.port}/ (read-only)")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -5,6 +5,7 @@ All notable changes are recorded here. Format follows [Keep a Changelog](https:/
 ## [Unreleased]
 
 ### Added
+- 2026-10-21 — Public deployment of the read-only API for a SYNTHETIC run only (owner request): `server.py` gains opt-in `--host`/`--allow-host` (non-loopback bind refused unless a host is allowed; Host header checked against the allow-list; default behaviour unchanged), test in `test_api.py`; `render.yaml` + `requirements-render.txt` (Render free web service, synthetic run generated at build); `frontend/vercel.json` (static viewer on Vercel, `/api/*` rewritten to the Render API). Real-data runs are not deployed (licence unverified). Still unauthenticated and read-only; deployment not yet verified at time of entry.
 - 2026-10-12 — Repository foundation scaffold (Phase F): directory structure; `README.md`, `CLAUDE.md`, `PR.md`, `architecture.md`, `decision.md`, `guardrails.md`, `design.md`, `IMPLEMENTATION_PLAN.md`, `CONTRIBUTING.md`; documentation set under `docs/`; GitHub PR/issue templates; `.gitignore`, `.editorconfig`, `.env.example`.
 - 2026-10-12 — Baseline specification copied unmodified into the repository root: `NEURAL_VOLATILITY_SURFACE_FORECASTING_LAB_MASTER_PLAN.md`.
 
