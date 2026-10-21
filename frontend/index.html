@@ -725,7 +725,7 @@ function needRun(main, info) {
   return false;
 }
 function originBanner(origin, desc) {
-  const t = { synthetic: "SYNTHETIC data. Not market data. Nothing here is evidence about real markets.", real: "Real data (hosted, upstream licence unverified). Backtest only. Descriptive; not a trading result.", unlabelled: "UNLABELLED run. Its origin is unknown. Do not treat it as real or synthetic." }[origin] || origin;
+  const t = { synthetic: "SYNTHETIC data. Not market data. Nothing here is evidence about real markets.", real: "Real data (SPY end-of-day options, hosted dataset). Backtest only. Descriptive; not a trading result.", unlabelled: "UNLABELLED run. Its origin is unknown. Do not treat it as real or synthetic." }[origin] || origin;
   return h("div", { class: "banner" + (origin === "unlabelled" ? "" : " info"), role: "status" }, ico(origin === "unlabelled" ? "warn" : "info"), h("div", null, t, desc && origin !== "synthetic" ? h("span", { class: "muted" }, " ", desc) : null));
 }
 

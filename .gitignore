@@ -142,3 +142,9 @@ temp/
 scratch/
 *.tmp
 *.bak
+
+# Owner-downloaded hosted dataset (licence unverified, DEC-002-A): never commit
+dataset/
+
+# DEC-002-B: the one published derived SPY run (surfaces only, no raw vendor rows)
+!demo_runs/**/*.npz

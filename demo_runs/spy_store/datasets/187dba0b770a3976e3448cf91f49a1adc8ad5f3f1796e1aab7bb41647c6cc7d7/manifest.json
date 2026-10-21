@@ -1,0 +1,225 @@
+{
+ "config": {
+  "data": {
+   "batch_rows": 500000,
+   "df_bounds": [
+    0.9,
+    1.01
+   ],
+   "forward_ratio_bounds": [
+    0.85,
+    1.15
+   ],
+   "kaggle_dataset": "dudesurfin/spy-options-eod-volatility-surface-2010-2023",
+   "max_abs_k": 0.3,
+   "max_abs_log_strike": 0.45,
+   "max_dte": 400,
+   "max_iv": 3.0,
+   "max_rel_spread": 0.35,
+   "min_dte": 2,
+   "min_iv": 0.02,
+   "min_mid": 0.05,
+   "min_parity_pairs": 3,
+   "parity_window_k": 0.06,
+   "regression_min_T": 0.0821917808219178,
+   "regression_min_pairs": 5
+  },
+  "features": {
+   "ffill_days": 5,
+   "horizon": 1,
+   "lags": [
+    1,
+    5
+   ],
+   "pca_components": 3,
+   "rolling_mean_window": 20,
+   "rv_windows": [
+    5,
+    20
+   ],
+   "seq_len": 20
+  },
+  "split": {
+   "first_test_year": 2016,
+   "last_test_year": 2023,
+   "min_train_years": 3
+  },
+  "surface": {
+   "gap_tight": 0.02,
+   "k_nodes": [
+    -0.2,
+    -0.12,
+    -0.08,
+    -0.04,
+    -0.02,
+    0.0,
+    0.02,
+    0.04,
+    0.08
+   ],
+   "min_quotes_per_slice": 5,
+   "tenor_days": [
+    7,
+    14,
+    30,
+    60,
+    91,
+    182
+   ],
+   "tol_obs_days": 1.0,
+   "tol_obs_frac": 0.015
+  },
+  "train": {
+   "batch_size": 128,
+   "dropout": 0.1,
+   "gru_hidden": 64,
+   "hidden": 128,
+   "lr": 0.001,
+   "max_epochs": 150,
+   "models": [
+    "mlp",
+    "gru"
+   ],
+   "patience": 15,
+   "ridge_alphas": [
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0
+   ],
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "weight_decay": 0.0001
+  }
+ },
+ "config_sha256": "eaa46df0c195d7453aa09c9314110037377f0583cfbb6fcacacba28ac7a7c97d",
+ "inputs": [
+  {
+   "bytes": 16005650,
+   "name": "spy_eod_2010.parquet",
+   "sha256": "b4f37ae9d3eef2c13abedcd31d1aacbf8cbdb2706f7702f5019798d8cd895a88"
+  },
+  {
+   "bytes": 17830004,
+   "name": "spy_eod_2011.parquet",
+   "sha256": "43c75ac5fbf2c3366843b3472043687dfbcf69e0663c918b673187c1ad66386e"
+  },
+  {
+   "bytes": 20311339,
+   "name": "spy_eod_2012.parquet",
+   "sha256": "cd2437d59285f44f8ea654bb8f0efca5d797daacd2bbce7d5a4c55bcd9cdddd0"
+  },
+  {
+   "bytes": 21027632,
+   "name": "spy_eod_2013.parquet",
+   "sha256": "1fbe7a4d964b0ac7c4b600364360ff6ee5561798f68599ddfc845925b945b3eb"
+  },
+  {
+   "bytes": 25320310,
+   "name": "spy_eod_2014.parquet",
+   "sha256": "783d23ce8f55c0071fad90689a17c022f7e4f212d46fbb790a304eae3cad9ecb"
+  },
+  {
+   "bytes": 29497366,
+   "name": "spy_eod_2015.parquet",
+   "sha256": "6a12ad27452a21d1f653620fbf183690e5889e6c628194699d5111ab8b8f4213"
+  },
+  {
+   "bytes": 32088731,
+   "name": "spy_eod_2016.parquet",
+   "sha256": "1df15e868b81cac8ef5dd084e26003bceffee941b4da02b0c9c67f54412df383"
+  },
+  {
+   "bytes": 35965245,
+   "name": "spy_eod_2017.parquet",
+   "sha256": "f354b84bc770ef08d08e9152ab9f406294f8c92362416296fa389ded8736f259"
+  },
+  {
+   "bytes": 46015973,
+   "name": "spy_eod_2018.parquet",
+   "sha256": "ce8474594f417b25e45fd486b74c4b46340c6f6e7733e4431e6b66a70f057195"
+  },
+  {
+   "bytes": 53780765,
+   "name": "spy_eod_2019.parquet",
+   "sha256": "fd3c4c95c25f4e5579042ba09fc6dd7cb03f8f10aff2de87e10aacf02c116adc"
+  },
+  {
+   "bytes": 76775477,
+   "name": "spy_eod_2020.parquet",
+   "sha256": "2d78191e83b193ef0c4bd9dd4536d62d529398403cfdcc4234503d379d313d4d"
+  },
+  {
+   "bytes": 85630707,
+   "name": "spy_eod_2021.parquet",
+   "sha256": "8c367546cdc2c7c446a6ae13b6689ca0e7b9738aa1fd2f1f31c9ee8faaa6303b"
+  },
+  {
+   "bytes": 75413015,
+   "name": "spy_eod_2022.parquet",
+   "sha256": "75b6e4d90e333e1ac38d344a4b5a9f7f762ad90edf24e52e2191ac5c500cce90"
+  },
+  {
+   "bytes": 60593897,
+   "name": "spy_eod_2023.parquet",
+   "sha256": "779a10a89d8dcee8429c5f1596dd5e8ac2680750147a5175cd94b9602978c204"
+  }
+ ],
+ "ledger_prefilter": {
+  "kept": 7037351,
+  "rejects": {
+   "dte_out_of_range": 1602997,
+   "no_usable_side": 9168,
+   "strike_far_from_spot": 819068
+  },
+  "rows_in": 9468584
+ },
+ "ledger_quotes": {
+  "kept": 4819053,
+  "rejects": {
+   "crossed_or_locked": 253849,
+   "k_out_of_range": 751586,
+   "low_price": 494696,
+   "missing_or_no_bid": 589464,
+   "no_parity_forward": 628,
+   "wide_spread": 128075
+  },
+  "rows_in": 7037351
+ },
+ "ledgers_conserved": true,
+ "max_rows": null,
+ "origin": "real",
+ "panel_sha256": "f6b841356cb03530dbe383672d02451cec8ca499056f7235f09b7d446ce799e2",
+ "quality_report_sha256": "de3dfea5eac07559339e19079492d642776ddb110061b7d2907c465620728be6",
+ "quote_diagnostics": {
+  "forward_slices": 72072,
+  "forward_slices_implausible": 0,
+  "forward_slices_no_pairs": 25,
+  "forward_slices_regression": 21156,
+  "quotes_kept": 4819053,
+  "reprice_err_max": 3.783128277239106e-15,
+  "reprice_err_median": 3.5453007771754974e-16,
+  "solver_status_rejects": {
+   "ABOVE_SOLVER_CEILING": 0,
+   "ABOVE_UPPER_BOUND": 0,
+   "BELOW_LOWER_BOUND": 0,
+   "BELOW_SOLVER_FLOOR": 0,
+   "INVALID_INPUT": 0
+  },
+  "vendor_iv_compared": 4818927,
+  "vendor_iv_median_abs_diff_decimal": 0.0030844584144046894,
+  "vendor_iv_median_ratio_vendor_over_ours": 0.989932422653236
+ },
+ "schema": "dataset-1",
+ "surface_status_counts": {
+  "interpolated_T": 102528,
+  "interpolated_k": 2980,
+  "missing": 34042,
+  "observed": 49450
+ },
+ "version_id": "187dba0b770a3976e3448cf91f49a1adc8ad5f3f1796e1aab7bb41647c6cc7d7"
+}

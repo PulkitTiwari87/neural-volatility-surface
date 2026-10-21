@@ -29,7 +29,7 @@ from volatility_lab.config.settings import Config  # noqa: E402
 from volatility_lab.ingestion.optionsdx import discover_files  # noqa: E402
 from volatility_lab.storage.raw_store import ingest  # noqa: E402
 
-LABEL = "SPY end-of-day options, upstream licence unverified, backtest only"
+LABEL = "SPY end-of-day options (Kaggle dudesurfin/spy-options-eod-volatility-surface-2010-2023), backtest only"
 
 
 def write_run(out: Path, files: list) -> Path:

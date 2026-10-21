@@ -1,12 +1,12 @@
-# Public, read-only research API serving ONLY a labelled synthetic run (generated at build time).
-# Real-data runs are never deployed: licence of the hosted data is unverified (decision.md).
+# Public, read-only research API serving the labelled SPY end-of-day run committed under demo_runs/ (derived surfaces only,
+# never the vendor's raw rows). Published by owner override DEC-002-B (decision.md).
 services:
   - type: web
     name: nvs-research-api
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements-render.txt && python scripts/make_synthetic_run.py --out scratch/demo_store
-    startCommand: PYTHONPATH=backend/src python -m volatility_lab.api.server --root scratch/demo_store/datasets --host 0.0.0.0 --port $PORT --allow-host .onrender.com
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: PYTHONPATH=backend/src python -m volatility_lab.api.server --root demo_runs/spy_store/datasets --host 0.0.0.0 --port $PORT --allow-host .onrender.com
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
