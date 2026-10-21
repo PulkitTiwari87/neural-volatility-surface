@@ -25,7 +25,7 @@
 | DEC-005 | Moneyness convention & maturity definition | **DECIDED 2026-10-20 (owner): keep the current convention** - maturity T = calendar days / 365 (no trading-day, holiday or early-close calendar), moneyness k = ln(K/F) as implemented. Changing it later means re-running experiments | Phase 2 | Quant lead |
 | DEC-006 | Surface grid & interpolation method | **DECIDED (option A) 2026-10-19 (owner):** keep current rules (6 tenors x 9 log-moneyness nodes, linear-in-IV in k, no extrapolation) as the documented baseline; alternatives only via the harness under a pre-registered replacement rule | Phase 2 exit | Quant lead |
 | DEC-007 | Backend API framework | **DECIDED 2026-10-20 (owner), for a local research tool: keep the standard-library, loopback-only, read-only API**; no web framework | Phase 5 (API) | Backend lead |
-| DEC-008 | Frontend framework & charting/3D technology | **DECIDED 2026-10-20 (owner), for a local research tool: keep the static 2D viewer; no 3D, no frontend framework.** Revisit only if the scope changes | Phase 5 | Frontend lead |
+| DEC-008 | Frontend framework & charting/3D technology | **DECIDED 2026-10-20 (owner): static single-file viewer, no frontend framework. AMENDED 2026-10-21 (owner): a 3D surface view is wanted and was added as a dependency-free canvas renderer (no Three.js, no framework).** | Phase 5 | Frontend lead |
 | DEC-009 | Storage & analytical file formats | PROPOSED | Phase 1 (raw store) | Data engineer |
 | DEC-010 | Experiment tracking & artifact versioning | PROPOSED | Phase 3 | ML engineer |
 | DEC-011 | Initial forecasting representation | PROPOSED | Phase 3 | Quant lead / ML engineer |
@@ -141,6 +141,8 @@ DEC-014 and DEC-015 are additions beyond the 13 required: the brief demands the 
 - **Review trigger:** spike result; need for built-in admin/auth that favours another framework.
 
 ## DEC-008 — Frontend framework and charting/3D technology
+
+> **Amendment 2026-10-21 (owner request):** the 3D ruling of 2026-10-20 is reversed. The viewer gained a "3D surface" tab (`frontend/index.html`, `surface3d`): standard-library-style, dependency-free canvas painter's-algorithm renderer, so the single-file/strict-CSP design is kept and no framework is introduced. Missing cells are not drawn or filled; interpolated cells keep the hatch/dot patterns; forecast shown as a wireframe. Verified only by running the viewer in a browser on a synthetic run; no frame-time measurement, no automated test of the canvas output. Palette changed from blue to a warm charcoal/amber scheme (design reference: `dashboard-design/stitch_3d_explorer.png`, generated with Stitch).
 
 - **Status:** NEEDS RESEARCH
 - **Context:** MP §16: "React with a charting library… Three.js through React Three Fiber… selected during technical design after a small feasibility test."

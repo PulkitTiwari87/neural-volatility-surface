@@ -16,18 +16,18 @@
   --r-sm:6px;--r:8px;--r-lg:12px;
 }
 [data-theme=dark]{
-  --bg:#0c1016;--s1:#121821;--s2:#18202b;--s3:#202a37;--line:#2a3544;
-  --ink:#e6ebf2;--ink2:#a7b2c2;--muted:#7d8999;--accent:#86c8e8;--on-accent:#0c1016;--focus:#86c8e8;
-  --ok:#5fb589;--prog:#e0a53a;--plan:#8a9bb5;--block:#e5675e;--na:#8c97a8;--unv:#c9b26b;--fail:#e5675e;
+  --bg:#12100e;--s1:#1a1714;--s2:#221e1a;--s3:#2c2721;--line:#3b342c;
+  --ink:#f0e9df;--ink2:#b9ae9f;--muted:#8d8272;--accent:#e8a24a;--on-accent:#12100e;--focus:#e8a24a;
+  --ok:#5fb589;--prog:#e0a53a;--plan:#a89b86;--block:#e5675e;--na:#9a8f7e;--unv:#c9b26b;--fail:#e5675e;
   --warn-bg:#2b2412;--err-bg:#2c1a1b;
-  --lo:27,58,85;--hi:143,208,240;
+  --lo:58,28,44;--hi:247,200,120;
 }
 [data-theme=light]{
-  --bg:#f3f5f7;--s1:#ffffff;--s2:#e8ecf0;--s3:#dde3ea;--line:#cfd6de;
-  --ink:#111722;--ink2:#4b586a;--muted:#5a6575;--accent:#1f6f99;--on-accent:#ffffff;--focus:#1f6f99;
-  --ok:#276b49;--prog:#8a5a0e;--plan:#4f5f7a;--block:#a93a33;--na:#5a6575;--unv:#75621c;--fail:#a93a33;
+  --bg:#f6f2ec;--s1:#ffffff;--s2:#ece6dd;--s3:#e1d9cd;--line:#d2c8b9;
+  --ink:#1a1612;--ink2:#5b5043;--muted:#6b5f51;--accent:#9a5410;--on-accent:#ffffff;--focus:#9a5410;
+  --ok:#276b49;--prog:#8a5a0e;--plan:#7a6a52;--block:#a93a33;--na:#6b5f51;--unv:#75621c;--fail:#a93a33;
   --warn-bg:#f4ead2;--err-bg:#f6e0de;
-  --lo:27,58,85;--hi:31,111,153;
+  --lo:58,28,44;--hi:154,84,16;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -48,7 +48,7 @@ svg.ico{width:1em;height:1em;flex:none;display:block}
 .btn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;min-height:44px;padding:0 18px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;font-weight:600;text-decoration:none;transition:transform .12s ease-out,background-color .15s}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--accent);color:var(--on-accent)}
-.btn.dark{background:#111722;color:#fff}
+.btn.dark{background:#1a1612;color:#fff}
 .btn.bsec{background:var(--s2);color:var(--ink)}
 .btn.sm{min-height:40px;padding:0 12px;font-weight:500}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
@@ -102,7 +102,9 @@ table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10p
 .sw.pred{background:var(--s2);border:2px solid var(--accent)}
 .legend{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
 .legend span{display:inline-flex;gap:8px;align-items:center}
-.diverge{height:12px;border-radius:6px;background:linear-gradient(90deg,#5aa9e6,#1b222c 50%,#e8924a)}
+.s3d-cv{display:block;width:100%;height:460px;border-radius:var(--r);background:var(--s1);border:1px solid var(--line);cursor:grab;touch-action:none}
+.s3d-cv:active{cursor:grabbing}
+.diverge{height:12px;border-radius:6px;background:linear-gradient(90deg,#6fbf8e,#1c1a17 50%,#e8924a)}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--s2)}
 .bar i{display:block;height:100%}
 
@@ -169,16 +171,16 @@ table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10p
 .hero h1{font-size:clamp(2.4rem,5vw,4.5rem);line-height:.98;letter-spacing:-.035em}
 .hero .sub{font-size:clamp(1.05rem,1.6vw,1.3rem);color:var(--ink2);max-width:46ch;margin:28px 0 36px;line-height:1.55}
 .hero .acts{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-.plate{background:#0c1016;color:#e6ebf2;border-radius:16px;padding:clamp(18px,3vw,32px)}
-.plate h2,.plate h3{font-size:15px;font-weight:500;color:#a7b2c2;letter-spacing:0}
-.plate .cap{font-size:13px;color:#a7b2c2;margin-top:14px}
+.plate{background:#12100e;color:#f0e9df;border-radius:16px;padding:clamp(18px,3vw,32px)}
+.plate h2,.plate h3{font-size:15px;font-weight:500;color:#b9ae9f;letter-spacing:0}
+.plate .cap{font-size:13px;color:#b9ae9f;margin-top:14px}
 .cgrid{display:grid;grid-template-columns:auto repeat(9,minmax(0,1fr));gap:4px;align-items:center;margin-top:16px}
 .cgrid .c{aspect-ratio:1.5;border-radius:4px;min-height:22px}
-.cgrid .c.s3{background:#86c8e8}
-.cgrid .c.s1{background-color:rgba(134,200,232,.22);background-image:repeating-linear-gradient(135deg,#86c8e8 0 1.5px,transparent 1.5px 5px)}
-.cgrid .c.s2{background-color:rgba(134,200,232,.22);background-image:radial-gradient(circle,#86c8e8 1.2px,transparent 1.6px);background-size:5px 5px}
-.cgrid .c.s0{border:1.5px dashed #7d8999}
-.cgrid .rl{font-family:var(--mono);font-size:12px;color:#a7b2c2;padding-right:8px;text-align:right}
+.cgrid .c.s3{background:#e8a24a}
+.cgrid .c.s1{background-color:rgba(232,162,74,.22);background-image:repeating-linear-gradient(135deg,#e8a24a 0 1.5px,transparent 1.5px 5px)}
+.cgrid .c.s2{background-color:rgba(232,162,74,.22);background-image:radial-gradient(circle,#e8a24a 1.2px,transparent 1.6px);background-size:5px 5px}
+.cgrid .c.s0{border:1.5px dashed #8d8272}
+.cgrid .rl{font-family:var(--mono);font-size:12px;color:#b9ae9f;padding-right:8px;text-align:right}
 .meta{font-size:14px;color:var(--ink2);margin-top:14px}
 .sec{padding:clamp(56px,9vw,120px) 0}
 .sec.step{background:var(--s2)}
@@ -193,12 +195,12 @@ table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10p
 .caprow p{color:var(--ink2);font-size:.95rem;grid-column:1}
 .caprow .chip{grid-column:2;grid-row:1/span 2;align-self:center}
 .prev{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;margin-top:20px}
-.prev .side2{background:#121821;border-radius:12px;padding:18px;color:#e6ebf2;align-self:start}
-.prev .side2 h3{font-size:15px;font-weight:600;color:#e6ebf2}
+.prev .side2{background:#1a1714;border-radius:12px;padding:18px;color:#f0e9df;align-self:start}
+.prev .side2 h3{font-size:15px;font-weight:600;color:#f0e9df}
 .prev .side2 dl{display:grid;grid-template-columns:1fr auto;gap:10px 12px;margin:14px 0 0}
-.prev .side2 dt{color:#a7b2c2}.prev .side2 dd{margin:0;font-variant-numeric:tabular-nums}
-.plate .seg{background:#18202b}.plate .seg button{color:#a7b2c2}.plate .seg button[aria-pressed=true]{background:#86c8e8;color:#0c1016}
-.plate .chip{background:#18202b;color:#a7b2c2}
+.prev .side2 dt{color:#b9ae9f}.prev .side2 dd{margin:0;font-variant-numeric:tabular-nums}
+.plate .seg{background:#221e1a}.plate .seg button{color:#b9ae9f}.plate .seg button[aria-pressed=true]{background:#e8a24a;color:#12100e}
+.plate .chip{background:#221e1a;color:#b9ae9f}
 .tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:20px 12px;margin:44px 0 0;padding:0;list-style:none}
 .tl li{display:flex;flex-direction:column;align-items:flex-start;gap:8px;position:relative;padding-top:6px}
 .tl li::before{content:"";position:absolute;left:0;right:-12px;top:24px;height:2px;background:var(--line)}
@@ -467,15 +469,15 @@ function dataTable(cols, rows, o = {}) {
 }
 
 /* ---------- heatmap (HTML grid so text stays readable on every screen; status = colour AND pattern) ---------- */
-const SC_LO = [27, 58, 85], SC_HI = [143, 208, 240];
+const SC_LO = [58, 28, 44], SC_HI = [247, 200, 120];
 const mixc = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
 const lumi = ([r, g, b]) => { const f = c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
 const levelRGB = t => mixc(SC_LO, SC_HI, Math.min(1, Math.max(0, t)));
-const divRGB = t => t < 0 ? mixc([27, 34, 44], [90, 169, 230], Math.min(1, -t)) : mixc([27, 34, 44], [232, 146, 74], Math.min(1, t));
+const divRGB = t => t < 0 ? mixc([28, 26, 23], [111, 191, 142], Math.min(1, -t)) : mixc([28, 26, 23], [232, 146, 74], Math.min(1, t));
 function paintCell(el, rgb, status) {
   const light = lumi(rgb) > .3;
-  el.style.backgroundColor = `rgb(${rgb})`; el.style.color = light ? "#0c1016" : "#e6ebf2";
-  const line = light ? "rgba(12,16,22,.42)" : "rgba(230,235,242,.5)";
+  el.style.backgroundColor = `rgb(${rgb})`; el.style.color = light ? "#12100e" : "#f0e9df";
+  const line = light ? "rgba(18,16,14,.42)" : "rgba(240,233,223,.5)";
   if (status === 1) el.style.backgroundImage = `repeating-linear-gradient(135deg,${line} 0 1.5px,transparent 1.5px 6px)`;
   else if (status === 2) { el.style.backgroundImage = `radial-gradient(circle,${line} 1.3px,transparent 1.7px)`; el.style.backgroundSize = "7px 7px"; }
 }
@@ -515,6 +517,83 @@ function heatmap(o) {
   }
   return el;
 }
+/* ---------- 3D surface: dependency-free canvas renderer (painter's algorithm), so the strict-CSP research server can still serve one file.
+   Missing cells are never drawn and never filled; interpolated cells keep the 2D patterns (hatch = tenor, dots = strike). ---------- */
+function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{yaw,pitch,zoom},label}
+  const nT = o.tenors.length, nK = o.ks.length, cam = o.cam, [lo, hi] = o.range;
+  const cv = h("canvas", { class: "s3d-cv", tabindex: 0, role: "img", "aria-label": o.label }), ctx = cv.getContext("2d");
+  const wrap = h("div", null, cv, h("div", { class: "row", style: "margin-top:10px;justify-content:space-between" }, h("span", { class: "axis-t", style: "margin:0", text: "Drag to rotate, scroll or +/- to zoom, click a node to inspect it. Arrow keys rotate." }), h("button", { class: "btn bsec sm", type: "button", onclick: () => { Object.assign(cam, { yaw: -.7, pitch: .55, zoom: 1 }); draw(); } }, "Reset view")));
+  const ok = (j, c) => o.status[j][c] !== 0 && o.vals[j][c] != null && isFinite(o.vals[j][c]);
+  const X = c => nK === 1 ? 0 : c / (nK - 1) * 2 - 1, Y = j => nT === 1 ? 0 : j / (nT - 1) * 2 - 1, Z = v => (Math.min(1.1, Math.max(-.1, (v - lo) / (hi - lo))) - .5) * 1.1;
+  let W = 0, H = 0, P = [];
+  const css = n => getComputedStyle(cv).getPropertyValue(n).trim();
+  function proj(x, y, z) {
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    const xr = x * cy - y * sy, yr = x * sy + y * cy, s = Math.min(W, H * 1.35) * .27 * cam.zoom;
+    return [W / 2 + xr * s, H * .54 - (yr * sp + z * cp) * s, yr * cp - z * sp];
+  }
+  function draw() {
+    if (!W) return;
+    const dpr = window.devicePixelRatio || 1; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const ink = css("--ink"), ink2 = css("--ink2"), line = css("--line"), accent = css("--accent"), bg = css("--s1");
+    ctx.font = "12px " + css("--mono"); ctx.textBaseline = "middle";
+    const zb = -.62, txt = (s, p, al, col) => { ctx.fillStyle = col || ink2; ctx.textAlign = al || "center"; ctx.fillText(s, p[0], p[1]); };
+    ctx.strokeStyle = line; ctx.lineWidth = 1;
+    for (let c = 0; c < nK; c++) { const a = proj(X(c), -1, zb), b = proj(X(c), 1, zb); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    for (let j = 0; j < nT; j++) { const a = proj(-1, Y(j), zb), b = proj(1, Y(j), zb); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    const kStep = Math.ceil(nK / 5);
+    for (let c = 0; c < nK; c += kStep) txt(fk(o.ks[c]), proj(X(c), -1.16, zb));
+    for (let j = 0; j < nT; j++) txt(o.tenors[j] + "d", proj(1.18, Y(j), zb), "left");
+    txt("log-moneyness k", proj(0, -1.38, zb)); txt("tenor (days)", proj(1.62, 0, zb), "left");
+    const za = proj(-1, -1, zb), zt = proj(-1, -1, .55); ctx.beginPath(); ctx.moveTo(za[0], za[1]); ctx.lineTo(zt[0], zt[1]); ctx.stroke();
+    txt(fv(lo, 1), [za[0] - 8, za[1] - 12], "right"); txt(fv(hi, 1), [zt[0] - 8, zt[1]], "right"); txt("IV (vol points)", [zt[0] - 6, zt[1] - 16], "left");
+    const quads = [];
+    for (let j = 0; j < nT - 1; j++) for (let c = 0; c < nK - 1; c++) {
+      const cs = [[j, c], [j, c + 1], [j + 1, c + 1], [j + 1, c]]; if (!cs.every(([a, b]) => ok(a, b))) continue;
+      const pts = cs.map(([a, b]) => proj(X(b), Y(a), Z(o.vals[a][b]))), st = cs.map(([a, b]) => o.status[a][b]);
+      quads.push({ pts, t: (cs.reduce((s, [a, b]) => s + o.vals[a][b], 0) / 4 - lo) / (hi - lo), kind: st.every(s => s === 3) ? 3 : st.includes(2) ? 2 : 1, d: pts.reduce((s, p) => s + p[2], 0) / 4 });
+    }
+    quads.sort((a, b) => b.d - a.d);
+    for (const q of quads) {
+      const rgb = levelRGB(q.t); ctx.beginPath(); q.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+      ctx.fillStyle = `rgb(${rgb})`; ctx.fill();
+      if (q.kind !== 3) {
+        const mark = lumi(rgb) > .3 ? "rgba(18,16,14,.5)" : "rgba(240,233,223,.6)"; ctx.save(); ctx.clip(); ctx.strokeStyle = mark; ctx.fillStyle = mark; ctx.lineWidth = 1.2;
+        const xs = q.pts.map(p => p[0]), ys = q.pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+        if (q.kind === 1) for (let x = x0 - (y1 - y0); x < x1; x += 6) { ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x + (y1 - y0), y0); ctx.stroke(); }
+        else for (let x = x0; x < x1; x += 7) for (let y = y0; y < y1; y += 7) { ctx.beginPath(); ctx.arc(x, y, 1.1, 0, 7); ctx.fill(); }
+        ctx.restore();
+      }
+      ctx.strokeStyle = bg; ctx.globalAlpha = .55; ctx.lineWidth = 1; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    P = [];
+    for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (ok(j, c)) { const p = proj(X(c), Y(j), Z(o.vals[j][c])); P.push({ j, c, x: p[0], y: p[1] }); if (o.status[j][c] === 3) { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(p[0], p[1], 2.4, 0, 7); ctx.fill(); } }
+    if (o.fc) {
+      const good = (j, c) => o.fc[j][c] != null && isFinite(o.fc[j][c]), fp = (j, c) => proj(X(c), Y(j), Z(o.fc[j][c])); ctx.strokeStyle = "#6fcf97"; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+      for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (good(j, c)) { const a = fp(j, c); for (const [dj, dc] of [[0, 1], [1, 0]]) if (j + dj < nT && c + dc < nK && good(j + dj, c + dc)) { const b = fp(j + dj, c + dc); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } }
+      ctx.setLineDash([]);
+    }
+    if (o.sel && o.sel.j != null) { const s = P.find(p => p.j === o.sel.j && p.c === o.sel.c); if (s) { ctx.strokeStyle = accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, 7); ctx.stroke(); } }
+  }
+  const resize = () => { W = cv.clientWidth; H = cv.clientHeight; draw(); };
+  const ro = new ResizeObserver(resize); ro.observe(cv); teardown.push(() => ro.disconnect());
+  let drag = null;
+  cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, moved: 0 }; });
+  cv.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy); cam.yaw += dx * .008; cam.pitch = Math.min(1.45, Math.max(.08, cam.pitch + dy * .008)); draw(); });
+  cv.addEventListener("pointerup", e => {
+    const was = drag; drag = null; if (!was || was.moved > 5 || !o.onSelect) return;
+    const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; let best = null, bd = 18 * 18;
+    for (const p of P) { const d = (p.x - mx) ** 2 + (p.y - my) ** 2; if (d <= bd) { bd = d; best = p; } }
+    if (best) { o.sel = { j: best.j, c: best.c }; draw(); o.onSelect(best.j, best.c); }
+  });
+  cv.addEventListener("wheel", e => { e.preventDefault(); cam.zoom = Math.min(2.4, Math.max(.6, cam.zoom * Math.exp(-e.deltaY * .001))); draw(); }, { passive: false });
+  cv.addEventListener("keydown", e => {
+    const m = { ArrowLeft: () => cam.yaw -= .12, ArrowRight: () => cam.yaw += .12, ArrowUp: () => cam.pitch = Math.min(1.45, cam.pitch + .08), ArrowDown: () => cam.pitch = Math.max(.08, cam.pitch - .08), "+": () => cam.zoom = Math.min(2.4, cam.zoom * 1.1), "=": () => cam.zoom = Math.min(2.4, cam.zoom * 1.1), "-": () => cam.zoom = Math.max(.6, cam.zoom / 1.1) }[e.key];
+    if (m) { e.preventDefault(); m(); draw(); }
+  });
+  return wrap;
+}
+
 const legend4 = () => h("div", { class: "legend", role: "list", "aria-label": "Cell status legend" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", { role: "listitem" }, h("i", { class: "sw s" + s }), t)));
 
 /* ---------- slices: SVG line charts; status by marker (filled = observed, hollow = interpolated, dashed = interpolated segment) ---------- */
@@ -535,7 +614,7 @@ function sliceChart(o) { // o: {xs, xt, xlabel, ys, status, fc, aria}
     ys.forEach((v, i) => { if (v == null) return; const obs = !stat || stat[i] === 3; svg.append(e("circle", { cx: X(i), cy: Y(v), r: 4.5, fill: obs ? col : "var(--s1)", stroke: col, "stroke-width": 2 })); });
   };
   series(o.ys, o.status, "var(--accent)");
-  if (o.fc) series(o.fc, null, "#e8924a", "2 4");
+  if (o.fc) series(o.fc, null, "#6fcf97", "2 4");
   return svg;
 }
 
@@ -637,7 +716,7 @@ async function pageExplorer(main, tok) {
   const N = info.dates.length;
   if (N < 1) { main.append(stateBox("empty", "This run has no dates", "The panel contains no surfaces.")); return; }
   if (sel.i == null || sel.i >= N) sel.i = N - 1;
-  if (!["heatmap", "table"].includes(sel.view)) sel.view = "heatmap";
+  if (!["heatmap", "3d", "table"].includes(sel.view)) sel.view = "heatmap";
   if (sel.model && !info.forecasts.includes(sel.model)) sel.model = null;
   if (!sel.model && info.forecasts.length) sel.model = info.forecasts[0];
   main.append(originBanner(info.origin, info.description));
@@ -654,11 +733,11 @@ async function pageExplorer(main, tok) {
   const work = h("div", { id: "work", role: "tabpanel" }), inspector = h("div", { class: "stack" });
   const lower = h("div", { class: "grid3", style: "margin-top:24px" }), lineage = h("div", { style: "margin-top:24px" });
   main.append(h("div", { class: "grid2", style: "align-items:start" }, h("section", { class: "panel", "aria-labelledby": "wt" }, h("header", null, h("h2", { id: "wt", text: "Implied-volatility surface" }), src("live")), tabsEl, work), inspector), lower, lineage);
-  let surf = null, fc = null, fcErr = "", seq = 0;
+  let surf = null, fc = null, fcErr = "", seq = 0; const cam = { yaw: -.7, pitch: .55, zoom: 1 };
   teardown.push(() => { clearTimeout(timer); });
   const KEYS = ["run", "i", "view", "model", "j", "c"];
   function setTabs() {
-    const order = [["heatmap", "Heatmap"], ["table", "Table"]];
+    const order = [["heatmap", "Heatmap"], ["3d", "3D surface"], ["table", "Table"]];
     tabsEl.replaceChildren(...order.map(([v, t]) => {
       const b = h("button", { class: "tab", type: "button", role: "tab", "aria-selected": String(sel.view === v), id: "tab-" + v, "aria-controls": "work", tabindex: sel.view === v ? 0 : -1 }, t);
       const go = nv => { sel.view = nv; syncHash("explorer", KEYS); setTabs(); drawWork(); const nb = $("#tab-" + nv); if (nb) nb.focus(); };
@@ -669,8 +748,7 @@ async function pageExplorer(main, tok) {
     work.setAttribute("aria-labelledby", "tab-" + sel.view);
   }
   const pick = (j, c, fromKey) => {
-    sel.j = j; sel.c = c; syncHash("explorer", KEYS); drawInspector();
-    live(`Tenor ${surf.tenor_days[j]} days, log-moneyness ${fk(surf.k_nodes[c])}: ` + (surf.status[j][c] === 0 ? "missing" : fv(surf.iv[j][c]) + " vol points, " + STATUS[surf.status[j][c]][1].toLowerCase()));
+    sel.j = j; sel.c = c; syncHash("explorer", KEYS); drawInspector();    live(`Tenor ${surf.tenor_days[j]} days, log-moneyness ${fk(surf.k_nodes[c])}: ` + (surf.status[j][c] === 0 ? "missing" : fv(surf.iv[j][c]) + " vol points, " + STATUS[surf.status[j][c]][1].toLowerCase()));
     if (!fromKey && sel.view === "heatmap") { work.querySelectorAll(".hc.sel").forEach(x => x.classList.remove("sel")); const n = $(`.hc[data-j="${j}"][data-c="${c}"]`, work); if (n) { n.classList.add("sel"); work.querySelectorAll(".hc").forEach(x => x.tabIndex = -1); n.tabIndex = 0; } }
     if (fromKey) { work.querySelectorAll(".hc.sel").forEach(x => x.classList.remove("sel")); const n = $(`.hc[data-j="${j}"][data-c="${c}"]`, work); if (n) n.classList.add("sel"); }
   };
@@ -684,13 +762,19 @@ async function pageExplorer(main, tok) {
         h("tbody", null, surf.tenor_days.map((T, j) => h("tr", null, h("th", { scope: "row", style: "background:none;font-weight:600;color:var(--ink)", text: String(T) }), surf.k_nodes.map((k, c) => { const st = surf.status[j][c]; return h("td", { class: "n" }, st === 0 || vals[j][c] == null ? "—" : [fv(vals[j][c]), h("span", { class: "muted", style: "display:block;font-size:12px" }, ["", "interp. tenor", "interp. strike", "observed"][st])]); })))))), h("div", { style: "margin-top:12px" }, legend4()));
       return;
     }
+    if (sel.view === "3d") {
+      const r3 = surfaceRange(surf.iv, ...(fc ? [fc.forecast] : []));
+      work.append(surface3d({ tenors: surf.tenor_days, ks: surf.k_nodes, vals: vals, status: surf.status, range: r3, fc: fc ? fc.forecast : null, sel: { j: sel.j, c: sel.c }, onSelect: pick, cam, label: "Interactive 3D implied-volatility surface by log-moneyness and tenor. The Table and Heatmap tabs show the same values." }),
+        h("p", { class: "axis-t", text: "Height and colour: implied volatility in vol points, " + fv(r3[0], 1) + " to " + fv(r3[1], 1) + ". Tenor nodes are evenly spaced, as in the term-structure chart. Gaps are missing cells and are never filled or extrapolated." + (fc ? " Dashed green wireframe: forecast (backtest)." : "") }), h("div", { style: "margin-top:12px" }, legend4()));
+      return;
+    }
     if (sel.view === "heatmap") {
       work.append(h("div", { class: "tablewrap" }, heatmap({ tenors: surf.tenor_days, ks: surf.k_nodes, vals, status: surf.status, mode: "level", range: rng, sel: { j: sel.j, c: sel.c }, onSelect: pick, label: "Implied volatility by tenor and log-moneyness. Arrow keys move between cells." })),
         h("p", { class: "axis-t", text: "Rows: tenor in days. Columns: log-moneyness k. Colour: implied volatility in vol points, scaled from " + fv(rng[0], 1) + " to " + fv(rng[1], 1) + " on this date. Pattern: how the cell was obtained." }), h("div", { style: "margin-top:12px" }, legend4()));
       return;
     }
   }
-  const chartLegend = f => h("div", { class: "legend", style: "margin-top:6px" }, h("span", null, h("i", { class: "sw s3", style: "border-radius:50%" }), "Observed"), h("span", null, h("i", { class: "sw", style: "border:2px solid var(--accent);border-radius:50%" }), "Interpolated (dashed line)"), f ? h("span", null, h("i", { class: "sw", style: "border:2px dotted #e8924a;border-radius:50%" }), "Forecast") : null);
+  const chartLegend = f => h("div", { class: "legend", style: "margin-top:6px" }, h("span", null, h("i", { class: "sw s3", style: "border-radius:50%" }), "Observed"), h("span", null, h("i", { class: "sw", style: "border:2px solid var(--accent);border-radius:50%" }), "Interpolated (dashed line)"), f ? h("span", null, h("i", { class: "sw", style: "border:2px dotted #6fcf97;border-radius:50%" }), "Forecast") : null);
   function drawInspector() {
     inspector.replaceChildren();
     const j = sel.j, c = sel.c, has = j != null && c != null && surf.status[j] && surf.status[j][c] != null;
@@ -713,7 +797,7 @@ async function pageExplorer(main, tok) {
     const mae = fc.mae_observed_vol_points;
     lower.append(mk("Actual", [cell(fc.actual, "level", r, "Actual surface"), h("p", { class: "foot" }, "Target date " + fc.target_date)], "pa", src("live")),
       mk("Forecast", [cell(fc.forecast, "level", r, "Forecast surface", true), h("p", { class: "foot" }, `Model ${fc.model}, made at origin ${fc.origin_date}, ${fc.horizon_panel_steps} panel step ahead. Backtest. Status patterns are those of the actual cell.`)], "pf", src("live")),
-      mk("Difference (forecast minus actual)", [cell(fc.difference, "diff", lim, "Difference"), h("div", { style: "margin-top:12px" }, h("div", { class: "diverge", role: "img", "aria-label": "Colour scale: blue negative, neutral zero, orange positive" }), h("div", { class: "row", style: "justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px" }, h("span", null, "Negative −" + fv(lim[1], 1)), h("span", null, "Zero"), h("span", null, "Positive +" + fv(lim[1], 1)))), h("p", { class: "foot" }, `Shown only where the actual cell is not missing: ${fi(fc.n_difference_cells)} cells. MAE on observed cells: ${mae == null ? "—" : mae.toFixed(3) + " vol points"} (n = ${fi(fc.n_observed_cells)}). Descriptive, one date, no significance.`)], "pd", src("live")));
+      mk("Difference (forecast minus actual)", [cell(fc.difference, "diff", lim, "Difference"), h("div", { style: "margin-top:12px" }, h("div", { class: "diverge", role: "img", "aria-label": "Colour scale: green negative, neutral zero, orange positive" }), h("div", { class: "row", style: "justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px" }, h("span", null, "Negative −" + fv(lim[1], 1)), h("span", null, "Zero"), h("span", null, "Positive +" + fv(lim[1], 1)))), h("p", { class: "foot" }, `Shown only where the actual cell is not missing: ${fi(fc.n_difference_cells)} cells. MAE on observed cells: ${mae == null ? "—" : mae.toFixed(3) + " vol points"} (n = ${fi(fc.n_observed_cells)}). Descriptive, one date, no significance.`)], "pd", src("live")));
   }
   function drawLineage() {
     lineage.replaceChildren(); const g = info.lineage;
@@ -891,7 +975,7 @@ async function pageLanding(tok) {
     h("h2", { text: "Surface status grid, conceptual illustration" }),
     h("div", { class: "cgrid", role: "img", "aria-label": "Conceptual 6 by 9 grid of surface-cell statuses. Not model output." }, HERO.map((row, j) => [h("span", { class: "rl", text: TENORS[j] + "d" }), [...row].map(ch => h("span", { class: "c s" + ({ O: 3, T: 1, K: 2, M: 0 })[ch] }))])),
     h("p", { class: "cap" }, h("span", { style: "display:block;margin-bottom:6px" }, "Rows: tenor (days). Columns: log-moneyness k, −0.20 to +0.08."), "Conceptual illustration. Not a model output."),
-    h("div", { class: "legend", style: "margin-top:14px;color:#a7b2c2" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", null, h("i", { class: "sw s" + s, style: s === 3 ? "background:#86c8e8" : s === 0 ? "border-color:#7d8999" : "" }), t))));
+    h("div", { class: "legend", style: "margin-top:14px;color:#b9ae9f" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", null, h("i", { class: "sw s" + s, style: s === 3 ? "background:#e8a24a" : s === 0 ? "border-color:#8d8272" : "" }), t))));
   const caps = D.caps.map(([n, t, s]) => h("div", { class: "caprow reveal" }, h("h3", { text: n }), chip(s), h("p", { text: t })));
   root.append(h("div", { class: "ln" },
     h("div", { class: "wrap" }, h("header", { class: "lnav" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), h("nav", { "aria-label": "Primary", style: "display:contents" }, links), cta("dark"), menuBtn)),
