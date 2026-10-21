@@ -102,7 +102,11 @@ table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10p
 .sw.pred{background:var(--s2);border:2px solid var(--accent)}
 .legend{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
 .legend span{display:inline-flex;gap:8px;align-items:center}
-.s3d-cv{display:block;width:100%;height:460px;border-radius:var(--r);background:var(--s1);border:1px solid var(--line);cursor:grab;touch-action:none}
+.themebtn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:40px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;cursor:pointer;padding:0}
+.themebtn .ico{width:20px;height:20px}
+.sidehead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.themebtn:hover{border-color:var(--accent)}
+.s3d-cv{display:block;width:100%;height:520px;border-radius:var(--r);background:#07080a;border:1px solid var(--line);cursor:grab;touch-action:none}
 .s3d-cv:active{cursor:grabbing}
 .diverge{height:12px;border-radius:6px;background:linear-gradient(90deg,#6fbf8e,#1c1a17 50%,#e8924a)}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--s2)}
@@ -296,6 +300,8 @@ const ICONS = {
   arrow: S('<path d="M4 10h11M11 5.5L15.5 10 11 14.5"/>'),
   back: S('<path d="M16 10H5M9 5.5L4.5 10 9 14.5"/>'),
   menu: S('<path d="M3.5 6h13M3.5 10h13M3.5 14h13"/>'),
+  sun: S('<circle cx="10" cy="10" r="3.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/>'),
+  moon: S('<path d="M16.5 11.6A6.8 6.8 0 018.4 3.5a6.8 6.8 0 108.1 8.1z"/>'),
   overview: S('<rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/>'),
   explorer: S('<path d="M2.8 14.5l4-3.5 3.2 2 3.5-6 3.7 4.5"/><path d="M2.8 17.2h14.4" stroke-opacity=".5"/>'),
   evaluation: S('<path d="M4 16V9M10 16V4M16 16v-5"/>'),
@@ -519,12 +525,16 @@ function heatmap(o) {
 }
 /* ---------- 3D surface: dependency-free canvas renderer (painter's algorithm), so the strict-CSP research server can still serve one file.
    Missing cells are never drawn and never filled; interpolated cells keep the 2D patterns (hatch = tenor, dots = strike). ---------- */
+/* 3D-only colormap: purple, blue, cyan, green, yellow, orange, red (low to high IV); the 2D heatmap keeps its own scale. */
+const RB = [[0, [72, 18, 160]], [.2, [58, 92, 232]], [.4, [38, 196, 214]], [.55, [96, 226, 138]], [.7, [240, 228, 66]], [.85, [250, 140, 48]], [1, [232, 48, 40]]];
+const rainbow = t => { t = Math.min(1, Math.max(0, t)); let i = 1; while (i < RB.length - 1 && t > RB[i][0]) i++; const [t0, a] = RB[i - 1], [t1, b] = RB[i], u = (t - t0) / (t1 - t0); return a.map((v, k) => Math.round(v + (b[k] - v) * u)); };
 function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{yaw,pitch,zoom},label}
   const nT = o.tenors.length, nK = o.ks.length, cam = o.cam, [lo, hi] = o.range;
   const cv = h("canvas", { class: "s3d-cv", tabindex: 0, role: "img", "aria-label": o.label }), ctx = cv.getContext("2d");
   const wrap = h("div", null, cv, h("div", { class: "row", style: "margin-top:10px;justify-content:space-between" }, h("span", { class: "axis-t", style: "margin:0", text: "Drag to rotate, scroll or +/- to zoom, click a node to inspect it. Arrow keys rotate." }), h("button", { class: "btn bsec sm", type: "button", onclick: () => { Object.assign(cam, { yaw: -.7, pitch: .55, zoom: 1 }); draw(); } }, "Reset view")));
   const ok = (j, c) => o.status[j][c] !== 0 && o.vals[j][c] != null && isFinite(o.vals[j][c]);
-  const X = c => nK === 1 ? 0 : c / (nK - 1) * 2 - 1, Y = j => nT === 1 ? 0 : j / (nT - 1) * 2 - 1, Z = v => (Math.min(1.1, Math.max(-.1, (v - lo) / (hi - lo))) - .5) * 1.1;
+  const X = c => nK === 1 ? 0 : (c / (nK - 1) * 2 - 1) * .8, Y = j => nT === 1 ? 0 : (j / (nT - 1) * 2 - 1) * .8, // .8: leaves a margin to the walls so the projected curves stay visible
+ Z = v => (Math.min(1.1, Math.max(-.1, (v - lo) / (hi - lo))) - .5) * 1.1;
   let W = 0, H = 0, P = [];
   const css = n => getComputedStyle(cv).getPropertyValue(n).trim();
   function proj(x, y, z) {
@@ -535,39 +545,63 @@ function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{
   function draw() {
     if (!W) return;
     const dpr = window.devicePixelRatio || 1; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-    const ink = css("--ink"), ink2 = css("--ink2"), line = css("--line"), accent = css("--accent"), bg = css("--s1");
+    const accent = css("--accent"), dim = "#aeb2bb", bright = "#eceef2", grid = "rgba(255,255,255,.14)";
     ctx.font = "12px " + css("--mono"); ctx.textBaseline = "middle";
-    const zb = -.62, txt = (s, p, al, col) => { ctx.fillStyle = col || ink2; ctx.textAlign = al || "center"; ctx.fillText(s, p[0], p[1]); };
-    ctx.strokeStyle = line; ctx.lineWidth = 1;
-    for (let c = 0; c < nK; c++) { const a = proj(X(c), -1, zb), b = proj(X(c), 1, zb); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
-    for (let j = 0; j < nT; j++) { const a = proj(-1, Y(j), zb), b = proj(1, Y(j), zb); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    const txt = (s, p, al, col) => { ctx.fillStyle = col || dim; ctx.textAlign = al || "center"; ctx.fillText(s, p[0], p[1]); };
+    const zb = -.62, zt = .62, ZT = [0, 1, 2, 3, 4], zv = i => lo + (hi - lo) * i / 4;
+    const line3 = (a, b) => { const p = proj(...a), q = proj(...b); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); };
+    const poly = pts => { ctx.beginPath(); pts.map(p => proj(...p)).forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); };
+    // back walls = the two walls farther from the camera (larger depth); the front edges carry the tick labels
+    const xb = proj(1, 0, 0)[2] > proj(-1, 0, 0)[2] ? 1 : -1, yb = proj(0, 1, 0)[2] > proj(0, -1, 0)[2] ? 1 : -1, fx = -xb, fy = -yb;
+    ctx.lineWidth = 1; ctx.strokeStyle = grid; ctx.fillStyle = "rgba(255,255,255,.035)";
+    poly([[-1, -1, zb], [1, -1, zb], [1, 1, zb], [-1, 1, zb]]); ctx.fill();
+    poly([[-1, yb, zb], [1, yb, zb], [1, yb, zt], [-1, yb, zt]]); ctx.fill(); ctx.stroke();
+    poly([[xb, -1, zb], [xb, 1, zb], [xb, 1, zt], [xb, -1, zt]]); ctx.fill(); ctx.stroke();
+    for (let c = 0; c < nK; c++) { line3([X(c), -1, zb], [X(c), 1, zb]); line3([X(c), yb, zb], [X(c), yb, zt]); }
+    for (let j = 0; j < nT; j++) { line3([-1, Y(j), zb], [1, Y(j), zb]); line3([xb, Y(j), zb], [xb, Y(j), zt]); }
+    ZT.forEach(i => { const z = Z(zv(i)); line3([-1, yb, z], [1, yb, z]); line3([xb, -1, z], [xb, 1, z]); });
+    // side projections: skew (IV vs strike, one curve per tenor) on the y wall, term structure (IV vs tenor, one curve per strike) on the x wall
+    const pickN = n => n <= 6 ? [...Array(n).keys()] : [...new Set([0, 1, 2, 3, 4, 5].map(i => Math.round(i * (n - 1) / 5)))];
+    const curve = (idx, len, pt) => idx.forEach((s, r, a) => {
+      ctx.strokeStyle = `rgb(${rainbow(.1 + .6 * r / Math.max(1, a.length - 1))})`; ctx.lineWidth = 1.7; ctx.beginPath(); let pen = false;
+      for (let i = 0; i < len; i++) { const p = pt(s, i); if (!p) { pen = false; continue; } pen ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); pen = true; }
+      ctx.stroke();
+    });
+    curve(pickN(nT), nK, (j, c) => ok(j, c) ? proj(X(c), yb, Z(o.vals[j][c])) : null);
+    curve(pickN(nK), nT, (c, j) => ok(j, c) ? proj(xb, Y(j), Z(o.vals[j][c])) : null);
+    txt("Term structure", proj(xb, 0, zt + .14), "center", bright); txt("Skew", proj(0, yb, zt + .14), "center", bright);
+    // axes
+    ctx.lineWidth = 1; ctx.strokeStyle = grid;
     const kStep = Math.ceil(nK / 5);
-    for (let c = 0; c < nK; c += kStep) txt(fk(o.ks[c]), proj(X(c), -1.16, zb));
-    for (let j = 0; j < nT; j++) txt(o.tenors[j] + "d", proj(1.18, Y(j), zb), "left");
-    txt("log-moneyness k", proj(0, -1.38, zb)); txt("tenor (days)", proj(1.62, 0, zb), "left");
-    const za = proj(-1, -1, zb), zt = proj(-1, -1, .55); ctx.beginPath(); ctx.moveTo(za[0], za[1]); ctx.lineTo(zt[0], zt[1]); ctx.stroke();
-    txt(fv(lo, 1), [za[0] - 8, za[1] - 12], "right"); txt(fv(hi, 1), [zt[0] - 8, zt[1]], "right"); txt("IV (vol points)", [zt[0] - 6, zt[1] - 16], "left");
+    for (let c = 0; c < nK; c += kStep) txt(fk(o.ks[c]), proj(X(c), fy * 1.14, zb));
+    for (let j = 0; j < nT; j++) txt(String(o.tenors[j]), proj(fx * 1.14, Y(j), zb), fx > 0 ? "left" : "right");
+    txt("Strike (log-moneyness k)", proj(0, fy * 1.55, zb), "center", bright); txt("Expiration (days)", proj(fx * 1.5, 0, zb), fx > 0 ? "left" : "right", bright);
+    const cs = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => ({ x, y, sx: proj(x, y, zb)[0] })).sort((a, b) => b.sx - a.sx)[0];
+    line3([cs.x, cs.y, zb], [cs.x, cs.y, zt]);
+    ZT.forEach(i => { const p = proj(cs.x, cs.y, Z(zv(i))); txt(fv(zv(i), 1), [p[0] + 10, p[1]], "left"); });
+    const ztp = proj(cs.x, cs.y, zt); txt("IV (vol points)", [Math.min(ztp[0] + 6, W - 112), ztp[1] - 18], "left", bright);
+    // surface
     const quads = [];
     for (let j = 0; j < nT - 1; j++) for (let c = 0; c < nK - 1; c++) {
-      const cs = [[j, c], [j, c + 1], [j + 1, c + 1], [j + 1, c]]; if (!cs.every(([a, b]) => ok(a, b))) continue;
-      const pts = cs.map(([a, b]) => proj(X(b), Y(a), Z(o.vals[a][b]))), st = cs.map(([a, b]) => o.status[a][b]);
-      quads.push({ pts, t: (cs.reduce((s, [a, b]) => s + o.vals[a][b], 0) / 4 - lo) / (hi - lo), kind: st.every(s => s === 3) ? 3 : st.includes(2) ? 2 : 1, d: pts.reduce((s, p) => s + p[2], 0) / 4 });
+      const cs4 = [[j, c], [j, c + 1], [j + 1, c + 1], [j + 1, c]]; if (!cs4.every(([a, b]) => ok(a, b))) continue;
+      const pts = cs4.map(([a, b]) => proj(X(b), Y(a), Z(o.vals[a][b]))), st = cs4.map(([a, b]) => o.status[a][b]);
+      quads.push({ pts, t: (cs4.reduce((s, [a, b]) => s + o.vals[a][b], 0) / 4 - lo) / (hi - lo), kind: st.every(s => s === 3) ? 3 : st.includes(2) ? 2 : 1, d: pts.reduce((s, p) => s + p[2], 0) / 4 });
     }
     quads.sort((a, b) => b.d - a.d);
     for (const q of quads) {
-      const rgb = levelRGB(q.t); ctx.beginPath(); q.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+      const rgb = rainbow(q.t); ctx.beginPath(); q.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
       ctx.fillStyle = `rgb(${rgb})`; ctx.fill();
       if (q.kind !== 3) {
-        const mark = lumi(rgb) > .3 ? "rgba(18,16,14,.5)" : "rgba(240,233,223,.6)"; ctx.save(); ctx.clip(); ctx.strokeStyle = mark; ctx.fillStyle = mark; ctx.lineWidth = 1.2;
+        const mark = lumi(rgb) > .3 ? "rgba(18,16,14,.3)" : "rgba(240,233,223,.4)"; ctx.save(); ctx.clip(); ctx.strokeStyle = mark; ctx.fillStyle = mark; ctx.lineWidth = 1;
         const xs = q.pts.map(p => p[0]), ys = q.pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
         if (q.kind === 1) for (let x = x0 - (y1 - y0); x < x1; x += 6) { ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x + (y1 - y0), y0); ctx.stroke(); }
         else for (let x = x0; x < x1; x += 7) for (let y = y0; y < y1; y += 7) { ctx.beginPath(); ctx.arc(x, y, 1.1, 0, 7); ctx.fill(); }
         ctx.restore();
       }
-      ctx.strokeStyle = bg; ctx.globalAlpha = .55; ctx.lineWidth = 1; ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = .6; ctx.stroke();
     }
     P = [];
-    for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (ok(j, c)) { const p = proj(X(c), Y(j), Z(o.vals[j][c])); P.push({ j, c, x: p[0], y: p[1] }); if (o.status[j][c] === 3) { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(p[0], p[1], 2.4, 0, 7); ctx.fill(); } }
+    for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (ok(j, c)) { const p = proj(X(c), Y(j), Z(o.vals[j][c])); P.push({ j, c, x: p[0], y: p[1] }); if (o.status[j][c] === 3) { ctx.fillStyle = bright; ctx.beginPath(); ctx.arc(p[0], p[1], 2.2, 0, 7); ctx.fill(); } }
     if (o.fc) {
       const good = (j, c) => o.fc[j][c] != null && isFinite(o.fc[j][c]), fp = (j, c) => proj(X(c), Y(j), Z(o.fc[j][c])); ctx.strokeStyle = "#6fcf97"; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
       for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (good(j, c)) { const a = fp(j, c); for (const [dj, dc] of [[0, 1], [1, 0]]) if (j + dj < nT && c + dc < nK && good(j + dj, c + dc)) { const b = fp(j + dj, c + dc); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } }
@@ -575,6 +609,7 @@ function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{
     }
     if (o.sel && o.sel.j != null) { const s = P.find(p => p.j === o.sel.j && p.c === o.sel.c); if (s) { ctx.strokeStyle = accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, 7); ctx.stroke(); } }
   }
+  window.addEventListener("nvs-theme", draw); teardown.push(() => window.removeEventListener("nvs-theme", draw));
   const resize = () => { W = cv.clientWidth; H = cv.clientHeight; draw(); };
   const ro = new ResizeObserver(resize); ro.observe(cv); teardown.push(() => ro.disconnect());
   let drag = null;
@@ -636,12 +671,25 @@ function runSelect(onchange) {
   s.addEventListener("change", () => onchange(s.value));
   return h("label", { class: "field" }, "Run", s);
 }
+/* Theme: a sun/moon icon button in each page's nav bar (landing header, workbench sidebar and mobile bar). The choice lives in memory only (this
+   viewer stores nothing in the browser, see test_viewer_static): it carries across pages until reload; until chosen, the landing page is light and the workbench dark. */
+let themePref = null; const themeBtns = new Set();
+function paintTheme(b) { const dark = document.documentElement.dataset.theme === "dark", l = "Switch to " + (dark ? "light" : "dark") + " theme"; b.replaceChildren(ico(dark ? "sun" : "moon")); b.setAttribute("aria-label", l); b.title = l; }
+function themeButton() {
+  const b = h("button", { class: "themebtn", type: "button" }); themeBtns.add(b); paintTheme(b);
+  b.addEventListener("click", () => { themePref = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; useTheme(themePref); });
+  return b;
+}
+function useTheme(def) {
+  document.documentElement.dataset.theme = themePref || def; themeBtns.forEach(paintTheme);
+  window.dispatchEvent(new Event("nvs-theme"));
+}
 function shell(page) {
-  const root = app(); root.replaceChildren(); cleanup();
-  document.documentElement.dataset.theme = "dark";
+  const root = app(); root.replaceChildren(); cleanup(); themeBtns.clear();
+  useTheme("dark");
   const keepRun = ["explorer", "evaluation", "artifacts"];
   const side = h("aside", { class: "side", id: "side", "aria-label": "Workbench navigation" },
-    h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })),
+    h("div", { class: "sidehead" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), themeButton()),
     h("nav", { "aria-label": "Workbench" }, h("ul", { class: "nav" }, NAV.map(([id, label, ic]) => h("li", null, h("a", { href: href(id, keepRun.includes(id) ? { run: sel.runId } : null), "aria-current": id === page ? "page" : null }, ico(ic), label))))),
     h("a", { class: "homelink", href: "#/" }, ico("back"), "Back to home"));
   const bg = h("div", { class: "drawerbg", id: "dbg" });
@@ -653,7 +701,7 @@ function shell(page) {
   const esc = e => { if (e.key === "Escape" && side.classList.contains("open")) setDrawer(false); };
   document.addEventListener("keydown", esc); teardown.push(() => document.removeEventListener("keydown", esc));
   const main = h("main", { class: "main", id: "main" },
-    h("div", { class: "mbar" }, menuBtn, h("b", { text: "Neural Volatility Surface" })),
+    h("div", { class: "mbar" }, menuBtn, h("b", { text: "Neural Volatility Surface" }), h("span", { style: "margin-left:auto" }, themeButton())),
     h("div", { class: "top" }, h("h1", { id: "pt", tabindex: -1, text: TITLES[page] }), ctxBar()));
   root.append(h("div", { class: "wb" }, side, main), bg);
   return main;
@@ -965,7 +1013,7 @@ const HERO = ["OOTTTOOOO", "OTOTOOTMO", "TOKOMOOOT", "OOMOTOOOM", "OTOOOTOOO", "
 const TENORS = [7, 14, 30, 60, 91, 182];
 async function pageLanding(tok) {
   const root = app(); root.replaceChildren(); cleanup();
-  document.documentElement.dataset.theme = "light";
+  themeBtns.clear(); useTheme("light");
   const menuBtn = h("button", { class: "btn bsec lmenu", type: "button", "aria-expanded": "false", "aria-controls": "lnl" }, ico("menu"), "Menu");
   const links = h("ul", { id: "lnl" }, [["Home", "#/", "page"], ["Workbench", href("overview")], ["Methodology", href("methodology")], ["Data & Provenance", href("data")], ["Documentation", href("methodology", null, "documents")]].map(([t, hr, cur]) => h("li", null, h("a", { href: hr, "aria-current": cur || null }, t))));
   menuBtn.addEventListener("click", () => { const o = links.classList.toggle("open"); menuBtn.setAttribute("aria-expanded", String(o)); });
@@ -978,7 +1026,7 @@ async function pageLanding(tok) {
     h("div", { class: "legend", style: "margin-top:14px;color:#b9ae9f" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", null, h("i", { class: "sw s" + s, style: s === 3 ? "background:#e8a24a" : s === 0 ? "border-color:#8d8272" : "" }), t))));
   const caps = D.caps.map(([n, t, s]) => h("div", { class: "caprow reveal" }, h("h3", { text: n }), chip(s), h("p", { text: t })));
   root.append(h("div", { class: "ln" },
-    h("div", { class: "wrap" }, h("header", { class: "lnav" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), h("nav", { "aria-label": "Primary", style: "display:contents" }, links), cta("dark"), menuBtn)),
+    h("div", { class: "wrap" }, h("header", { class: "lnav" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), h("nav", { "aria-label": "Primary", style: "display:contents" }, links), cta("dark"), themeButton(), menuBtn)),
     h("main", { id: "main", tabindex: -1 },
       h("div", { class: "wrap" }, h("section", { class: "hero", "aria-labelledby": "h1" }, h("div", null, h("h1", { id: "h1", text: "See the structure behind volatility." }), h("p", { class: "sub", text: "Explore implied-volatility surfaces, examine model behavior, and evaluate quantitative forecasts through a transparent research workflow." }), h("div", { class: "acts" }, cta("dark"), h("a", { class: "link", href: href("methodology") }, "Explore Methodology"))), h("div", null, hero, h("p", { class: "meta" }, "Local research tool · stored or synthetic runs only · Backtest only")))),
       h("section", { class: "sec", "aria-labelledby": "h2a" }, h("div", { class: "wrap split" }, h("div", { class: "reveal" }, h("h2", { class: "big", id: "h2a", text: "What this project investigates" }), h("div", { class: "pull" }, chip("completed", "Documented, descriptive only"), h("p", { text: "Historical record (E-1, withdrawn dataset): neither neural architecture beat the persistence baseline on pooled error." }))), h("div", { class: "txt reveal" }, h("p", { text: "An implied-volatility surface describes how the market prices options across strikes and expiries. This project constructs those surfaces from option quotes, forecasts how they change from one day to the next, and compares every forecast against simple baselines such as persistence." }), h("p", { text: "Forecasts are judged out of sample, in chronological order, with the number of cells behind every figure shown. Results so far are descriptive: no claim of statistical significance, calibration or trading value is made." })))),
