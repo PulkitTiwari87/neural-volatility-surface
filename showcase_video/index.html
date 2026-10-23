@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Neural Volatility Surface - showcase</title>
+<style>
+  html, body { margin: 0; background: #04060d; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #04060d; color: #eaf4ff;
+    font-family: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+  canvas#c { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  .t { position: absolute; opacity: 0; will-change: opacity, transform; transform-origin: 0 50%; }
+  .hl { font-weight: 600; letter-spacing: .2em; text-transform: uppercase; font-size: 36px; line-height: 1.25; text-shadow: 0 0 28px rgba(40, 120, 255, .45), 0 2px 14px rgba(0, 0, 0, .8); }
+  .sub { font-weight: 300; font-size: 31px; letter-spacing: .035em; color: #c4dcf0; text-shadow: 0 2px 14px rgba(0, 0, 0, .9); }
+  .mono { font-family: "Cascadia Mono", "Cascadia Code", Consolas, monospace; }
+  .cy { color: #7fe3ff; }
+  #lab, #nlab { left: 64px; bottom: 44px; font-size: 16px; letter-spacing: .08em; color: #8db4d2; line-height: 1.6; text-shadow: 0 1px 8px #000; }
+  #lab b, #nlab b { color: #bff3ff; font-weight: 600; letter-spacing: .14em; }
+  #legend { right: 64px; bottom: 44px; font-size: 16px; letter-spacing: .08em; color: #8db4d2; text-align: right; line-height: 1.8; text-shadow: 0 1px 8px #000; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: #e9fdff; box-shadow: 0 0 10px #8de8ff; margin-right: 10px; vertical-align: -1px; }
+  .ring { display: inline-block; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #a8ecff; margin-right: 10px; vertical-align: -1px; }
+  /* engineering montage */
+  .panel { position: absolute; background: linear-gradient(160deg, rgba(15, 24, 48, .94), rgba(7, 11, 24, .94)); border: 1px solid rgba(90, 170, 255, .30); border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .6), 0 0 40px rgba(40, 110, 255, .08); overflow: hidden; opacity: 0; will-change: opacity, transform; }
+  .panel .bar { height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 18px; font: 500 15px "Cascadia Mono", Consolas, monospace; color: #8fb6d8; border-bottom: 1px solid rgba(90, 170, 255, .16); letter-spacing: .03em; }
+  .panel .bar i { width: 10px; height: 10px; border-radius: 50%; background: #2c4468; display: inline-block; }
+  .panel pre { margin: 0; padding: 18px 24px; font: 400 21px/1.52 "Cascadia Mono", Consolas, monospace; color: #cfe4f7; white-space: pre; }
+  .k { color: #7fd8ff; } .s { color: #c3b0ff; } .n { color: #ffd48a; } .g { color: #7ee0b0; } .d { color: #6f8aa6; } .r { color: #ff9eb0; }
+  .kw { position: absolute; font-weight: 600; letter-spacing: .24em; font-size: 30px; text-transform: uppercase; opacity: 0; }
+  .kw small { display: block; font-weight: 300; font-size: 21px; letter-spacing: .06em; color: #9fc0dc; margin-top: 8px; text-transform: none; }
+  .chip { display: inline-block; padding: 3px 12px; border-radius: 999px; font: 600 15px "Bahnschrift", "Segoe UI", sans-serif; letter-spacing: .14em; border: 1px solid; margin-right: 14px; }
+  .c-ok { color: #8be9c0; border-color: rgba(139, 233, 192, .5); background: rgba(40, 140, 100, .14); }
+  .c-no { color: #ffb4a8; border-color: rgba(255, 180, 168, .45); background: rgba(160, 60, 50, .14); }
+  .c-wait { color: #ffd98a; border-color: rgba(255, 217, 138, .45); background: rgba(160, 120, 30, .14); }
+  .shot { position: absolute; opacity: 0; border-radius: 12px; overflow: hidden; border: 1px solid rgba(110, 180, 255, .35); box-shadow: 0 40px 120px rgba(0, 0, 0, .75), 0 0 60px rgba(40, 110, 255, .10); will-change: opacity, transform; }
+  .shot img { display: block; width: 100%; height: 100%; }
+  .cn { display: inline-block; padding: 11px 18px; border: 1px solid rgba(110, 180, 255, .38); border-radius: 8px; background: rgba(10, 20, 44, .72); margin: 0 4px; }
+  .ca { color: #4a7ba6; font-size: 26px; margin: 0 2px; }
+  #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" width="1920" height="1080"></canvas>
+  <div id="ui"></div>
+  <div id="fade"></div>
+</div>
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="scenes.js"></script>
+</body>
+</html>

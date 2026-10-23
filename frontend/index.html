@@ -106,8 +106,11 @@ table.t caption{text-align:left;color:var(--ink2);font-size:13px;padding:0 0 10p
 .themebtn .ico{width:20px;height:20px}
 .sidehead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .themebtn:hover{border-color:var(--accent)}
-.s3d-cv{display:block;width:100%;height:520px;border-radius:var(--r);background:#07080a;border:1px solid var(--line);cursor:grab;touch-action:none}
+.s3d-cv{display:block;width:100%;height:520px;border-radius:var(--r);background:var(--s1);border:1px solid var(--line);cursor:grab;touch-action:none}
 .s3d-cv:active{cursor:grabbing}
+.s3d-big .s3d-cv{height:clamp(480px,74vh,800px)}
+.s3d-big .banner,.s3d-big .axis-t,.s3d-big .legend{margin-top:12px}
+.s3d-big .s3d-head{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;margin:0 0 12px}
 .diverge{height:12px;border-radius:6px;background:linear-gradient(90deg,#6fbf8e,#1c1a17 50%,#e8924a)}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--s2)}
 .bar i{display:block;height:100%}
@@ -400,7 +403,7 @@ const D = {
     ["L-02", "Implied volatility is inferred from a model and its inputs; it is not observed."],
     ["L-05", "Surfaces are sparse; interpolation adds structure that is not market data."],
     ["L-10", "Historical backtests are not prospective evidence."],
-    ["L-15", "Surface views are 2D only (heatmap and table); the 3D view was removed (DEC-008)."],
+    ["L-15", "Surface views are a heatmap, a table and a 3D canvas (DEC-008, amended 2026-10-21). The 3D view is a dependency-free renderer with no automated test of its drawn output."],
     ["L-22", "No statistical-inference method for model-versus-baseline comparisons has been validated; the search was closed on 2026-10-13. No significance or coverage claim is made."],
     ["L-23", "SPY options are American-style but implied volatility is computed with European Black-76 on out-of-the-money mid prices; forward and discount are implied from put-call parity. Level bias is possible."],
     ["L-24", "One underlying (SPY), one vendor, one daily snapshot. That hosted dataset was withdrawn on 2026-10-20 (DEC-002) and its upstream licence was never verified; historical backtest only."],
@@ -545,7 +548,8 @@ function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{
   function draw() {
     if (!W) return;
     const dpr = window.devicePixelRatio || 1; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-    const accent = css("--accent"), dim = "#aeb2bb", bright = "#eceef2", grid = "rgba(255,255,255,.14)";
+    const dark = (cv.closest("[data-theme]") || document.documentElement).dataset.theme === "dark";
+    const accent = css("--accent"), dim = css("--ink2"), bright = css("--ink"), grid = dark ? "rgba(255,255,255,.14)" : "rgba(26,22,18,.2)", wall = dark ? "rgba(255,255,255,.035)" : "rgba(26,22,18,.045)", fcol = dark ? "#6fcf97" : "#1d7a46";
     ctx.font = "12px " + css("--mono"); ctx.textBaseline = "middle";
     const txt = (s, p, al, col) => { ctx.fillStyle = col || dim; ctx.textAlign = al || "center"; ctx.fillText(s, p[0], p[1]); };
     const zb = -.62, zt = .62, ZT = [0, 1, 2, 3, 4], zv = i => lo + (hi - lo) * i / 4;
@@ -553,7 +557,7 @@ function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{
     const poly = pts => { ctx.beginPath(); pts.map(p => proj(...p)).forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); };
     // back walls = the two walls farther from the camera (larger depth); the front edges carry the tick labels
     const xb = proj(1, 0, 0)[2] > proj(-1, 0, 0)[2] ? 1 : -1, yb = proj(0, 1, 0)[2] > proj(0, -1, 0)[2] ? 1 : -1, fx = -xb, fy = -yb;
-    ctx.lineWidth = 1; ctx.strokeStyle = grid; ctx.fillStyle = "rgba(255,255,255,.035)";
+    ctx.lineWidth = 1; ctx.strokeStyle = grid; ctx.fillStyle = wall;
     poly([[-1, -1, zb], [1, -1, zb], [1, 1, zb], [-1, 1, zb]]); ctx.fill();
     poly([[-1, yb, zb], [1, yb, zb], [1, yb, zt], [-1, yb, zt]]); ctx.fill(); ctx.stroke();
     poly([[xb, -1, zb], [xb, 1, zb], [xb, 1, zt], [xb, -1, zt]]); ctx.fill(); ctx.stroke();
@@ -603,7 +607,7 @@ function surface3d(o) { // o: {tenors,ks,vals,status,range,fc,sel,onSelect,cam:{
     P = [];
     for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (ok(j, c)) { const p = proj(X(c), Y(j), Z(o.vals[j][c])); P.push({ j, c, x: p[0], y: p[1] }); if (o.status[j][c] === 3) { ctx.fillStyle = bright; ctx.beginPath(); ctx.arc(p[0], p[1], 2.2, 0, 7); ctx.fill(); } }
     if (o.fc) {
-      const good = (j, c) => o.fc[j][c] != null && isFinite(o.fc[j][c]), fp = (j, c) => proj(X(c), Y(j), Z(o.fc[j][c])); ctx.strokeStyle = "#6fcf97"; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+      const good = (j, c) => o.fc[j][c] != null && isFinite(o.fc[j][c]), fp = (j, c) => proj(X(c), Y(j), Z(o.fc[j][c])); ctx.strokeStyle = fcol; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
       for (let j = 0; j < nT; j++) for (let c = 0; c < nK; c++) if (good(j, c)) { const a = fp(j, c); for (const [dj, dc] of [[0, 1], [1, 0]]) if (j + dj < nT && c + dc < nK && good(j + dj, c + dc)) { const b = fp(j + dj, c + dc); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } }
       ctx.setLineDash([]);
     }
@@ -757,7 +761,7 @@ async function pageOverview(main, tok) {
 
 /* ---------- pages: explorer ---------- */
 async function pageExplorer(main, tok) {
-  lede(main, "Inspect one stored surface as a heatmap or table; every cell shows how it was obtained.");
+  lede(main, "Inspect one stored surface as a heatmap, a 3D surface or a table; every cell shows how it was obtained.");
   await connected(); if (tok !== renderTok) return;
   const info = await ensureRun(); if (tok !== renderTok) return;
   if (needRun(main, info)) return;
@@ -1025,10 +1029,12 @@ async function pageLanding(tok) {
     h("p", { class: "cap" }, h("span", { style: "display:block;margin-bottom:6px" }, "Rows: tenor (days). Columns: log-moneyness k, −0.20 to +0.08."), "Conceptual illustration. Not a model output."),
     h("div", { class: "legend", style: "margin-top:14px;color:#b9ae9f" }, [[3, "Observed"], [1, "Interpolated in tenor"], [2, "Interpolated in strike"], [0, "Missing"]].map(([s, t]) => h("span", null, h("i", { class: "sw s" + s, style: s === 3 ? "background:#e8a24a" : s === 0 ? "border-color:#8d8272" : "" }), t))));
   const caps = D.caps.map(([n, t, s]) => h("div", { class: "caprow reveal" }, h("h3", { text: n }), chip(s), h("p", { text: t })));
+  const s3dBox = h("div", { class: "s3d-big" }, skeleton(1, 480));
   root.append(h("div", { class: "ln" },
     h("div", { class: "wrap" }, h("header", { class: "lnav" }, h("a", { class: "brand", href: "#/" }, h("b", { text: "Neural Volatility Surface" }), h("span", { text: "Quantitative Research Workbench" })), h("nav", { "aria-label": "Primary", style: "display:contents" }, links), cta("dark"), themeButton(), menuBtn)),
     h("main", { id: "main", tabindex: -1 },
       h("div", { class: "wrap" }, h("section", { class: "hero", "aria-labelledby": "h1" }, h("div", null, h("h1", { id: "h1", text: "See the structure behind volatility." }), h("p", { class: "sub", text: "Explore implied-volatility surfaces, examine model behavior, and evaluate quantitative forecasts through a transparent research workflow." }), h("div", { class: "acts" }, cta("dark"), h("a", { class: "link", href: href("methodology") }, "Explore Methodology"))), h("div", null, hero, h("p", { class: "meta" }, "Local research tool · stored or synthetic runs only · Backtest only")))),
+      h("section", { class: "sec", style: "padding-top:0", "aria-labelledby": "h2s" }, h("div", { class: "wrap" }, h("h2", { class: "big", id: "h2s", text: "The surface in three dimensions" }), h("p", { style: "margin:14px 0 28px;max-width:62ch;color:var(--ink2);font-size:1.05rem;line-height:1.55", text: "The most recent surface of the selected stored run. Height and colour are implied volatility; gaps are missing cells and are never filled or extrapolated." }), s3dBox)),
       h("section", { class: "sec", "aria-labelledby": "h2a" }, h("div", { class: "wrap split" }, h("div", { class: "reveal" }, h("h2", { class: "big", id: "h2a", text: "What this project investigates" }), h("div", { class: "pull" }, chip("completed", "Documented, descriptive only"), h("p", { text: "Historical record (E-1, withdrawn dataset): neither neural architecture beat the persistence baseline on pooled error." }))), h("div", { class: "txt reveal" }, h("p", { text: "An implied-volatility surface describes how the market prices options across strikes and expiries. This project constructs those surfaces from option quotes, forecasts how they change from one day to the next, and compares every forecast against simple baselines such as persistence." }), h("p", { text: "Forecasts are judged out of sample, in chronological order, with the number of cells behind every figure shown. Results so far are descriptive: no claim of statistical significance, calibration or trading value is made." })))),
       h("section", { class: "sec", "aria-labelledby": "h2b", style: "padding-top:0" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2b", text: "What the workbench does" }), h("div", { style: "margin-top:24px;max-width:960px" }, caps))),
       h("section", { class: "sec step", "aria-labelledby": "h2d" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2d", text: "Research workflow" }), h("ol", { class: "tl" }, D.flow.map(([n, s, st]) => h("li", { class: "reveal" }, h("span", { class: "dot", style: `color:var(--${({ completed: "ok", blocked: "block" })[st] || "plan"})` }, ico(STATE[st][0])), h("b", { text: n }), h("small", { text: s })))))),
@@ -1036,6 +1042,29 @@ async function pageLanding(tok) {
       h("section", { class: "sec", "aria-labelledby": "h2f", style: "padding-top:0" }, h("div", { class: "wrap" }, h("h2", { class: "big reveal", id: "h2f", text: "Documentation" }), h("ul", { class: "dl2" }, [["Research methodology", href("methodology")], ["Known limitations", href("methodology", null, "limitations")], ["Data dictionary", href("methodology", null, "documents")], ["Experiment E-1 results (historical)", href("evaluation")], ["Experiment E-2 results (historical)", href("experiments")], ["Reproducibility notebooks", href("artifacts")]].map(([t, hr]) => h("li", null, h("a", { href: hr }, t, ico("arrow")))))))),
     h("footer", { class: "lfoot" }, h("div", { class: "wrap" }, h("b", { text: "Neural Volatility Surface" }), h("span", { class: "ink2", text: "Research and education only. Not investment advice and not a trading product." }), h("nav", { "aria-label": "Footer" }, h("a", { href: href("methodology") }, "Methodology"), h("a", { href: href("data") }, "Data & Provenance"), h("a", { href: href("methodology", null, "documents") }, "Documentation"))))));
   reveal(root);
+  await landingSurface(s3dBox, tok);
+}
+/* Landing 3D surface: the latest surface of the selected stored run, read from the same GET routes as the Explorer. Nothing is drawn unless the API returns it. */
+async function landingSurface(box, tok) {
+  const fail = (kind, title, text, action) => box.replaceChildren(stateBox(kind, title, text, action));
+  await connected(); if (tok !== renderTok) return;
+  if (conn.state !== "connected") return fail("unavailable", "Not connected", "The research API did not respond (" + conn.err + "). The 3D surface appears here when a stored run is available.", retry(async () => { await connect(true); route(); }));
+  if (!conn.runs.length) return fail("empty", "No run is loaded", "The research API lists no runs.");
+  const info = await ensureRun(); if (tok !== renderTok) return;
+  if (!info || info.error) return fail("error", "Could not load this run", info ? info.error : "unknown error", retry(() => { cache.clear(); route(); }));
+  if (!info.dates.length) return fail("empty", "This run has no dates", "The panel contains no surfaces.");
+  const i = info.dates.length - 1; let s;
+  try { s = checkSurface(await api(`/api/runs/${U(sel.runId)}/surface/${i}`)); }
+  catch (e) { if (tok !== renderTok) return; return fail("error", "Could not load this surface", e.message, retry(() => { cache.clear(); route(); })); }
+  if (tok !== renderTok) return;
+  const rng = surfaceRange(s.iv);
+  if (!rng) return fail("unavailable", "No surface values on this date", "Every cell is missing. Missing cells are never filled or extrapolated.");
+  const readout = h("p", { class: "axis-t", "aria-live": "polite", text: "Click a node to read its value." });
+  const pick = (j, c) => { readout.textContent = `Tenor ${s.tenor_days[j]} days, log-moneyness ${fk(s.k_nodes[c])}: ` + (s.status[j][c] === 0 ? "missing" : fv(s.iv[j][c]) + " vol points, " + STATUS[s.status[j][c]][1].toLowerCase()); };
+  box.replaceChildren(originBanner(info.origin, info.description),
+    h("div", { class: "s3d-head", style: "margin-top:16px" }, h("span", { class: "ink2" }, "Surface date ", h("b", { class: "mono", text: s.date || "unknown" }), " · run ", h("b", { class: "mono", text: sel.runId.slice(0, 8) })), h("a", { class: "link", href: href("explorer", { run: sel.runId, i, view: "3d" }) }, "Open in Surface Explorer", ico("arrow"))),
+    surface3d({ tenors: s.tenor_days, ks: s.k_nodes, vals: s.iv, status: s.status, range: rng, fc: null, sel: { j: null, c: null }, onSelect: pick, cam: { yaw: -.7, pitch: .55, zoom: 1 }, label: "Interactive 3D implied-volatility surface by log-moneyness and tenor. The Workbench Surface Explorer shows the same values as a heatmap and a table." }),
+    readout, h("p", { class: "axis-t", text: "Height and colour: implied volatility in vol points, " + fv(rng[0], 1) + " to " + fv(rng[1], 1) + ". Tenor nodes are evenly spaced. Stored data only, not a live market view." }), legend4());
 }
 
 /* ---------- router ---------- */
